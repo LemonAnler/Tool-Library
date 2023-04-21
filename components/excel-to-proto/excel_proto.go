@@ -73,10 +73,15 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 		return errors.Errorf("创建proto文件失败 %v", errNewProto)
 	}
 
+	protoStr := strings.Builder{}
+
 	//消息头部
-	fileProto.WriteString("syntax = \"proto3\";\n\n")
-	fileProto.WriteString("package conf;\n\n")
-	fileProto.WriteString("option go_package=\"" + confProtoPath + ";conf\";")
+
+	_, errProtoStr := protoStr.WriteString("syntax = \"proto3\";\n\npackage conf;\n\noption go_package=\"" + confProtoPath + ";conf\";")
+
+	if errProtoStr != nil {
+		return errors.Errorf("protoStr.WriteString 写入proto文件失败 %v", errProtoStr)
+	}
 
 	if strings.HasSuffix(confPath, "/") {
 		confPath = confPath[:len(confPath)-1]
@@ -106,7 +111,7 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 
 		for path := range fMap {
 
-			errGen := genProtoByTable(path, ProtoPath, fileProto, protoIdGen)
+			errGen := genProtoByTable(path, ProtoPath, &protoStr, protoIdGen)
 
 			if errGen != nil {
 				return errors.Errorf("genProtoByTable 表格：%v 生成Proto失败 Error：%v", path, errGen)
@@ -114,10 +119,17 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 		}
 	}
 
+	//写入总的proto文件
+	err := os.WriteFile(confProtoPath, []byte(protoStr.String()), 0777)
+
+	if err != nil {
+		return errors.Errorf("写入protoA文件失败 %v", err)
+	}
+
 	return nil
 }
 
-func genProtoByTable(path string, ProtoPath string, fileProto *os.File, protoIdGen *ProtoIDGen.ProtoIdGen) error {
+func genProtoByTable(path string, ProtoPath string, allProtoBuilder *strings.Builder, protoIdGen *ProtoIDGen.ProtoIdGen) error {
 
 	data, errFileTable := os.ReadFile(path)
 
@@ -202,51 +214,73 @@ func genProtoByTable(path string, ProtoPath string, fileProto *os.File, protoIdG
 
 		messageName := ProtoIDGen.GetMessageName(filenameOnly, sheetName)
 
-		itselfProto, errItself := GenItselfProto(ProtoPath, messageName)
+		itselfProtoStr := strings.Builder{}
+
+		errItself := GenItselfProtoStr(ProtoPath, messageName, &itselfProtoStr)
 
 		if errItself != nil {
-			return errors.Errorf("GenItselfProto 生成自身proto失败 %v", errItself)
+			return errors.Errorf("GenItselfProtoStr 生成自身proto Str失败 %v", errItself)
 		}
 
 		//写入proto文件
-		GenProtoTomessage(path, sheetName, memberMap, itselfProto, protoIdGen)
-		itselfProto.Close()
+		errGenProto := GenProtoTomessage(path, sheetName, memberMap, &itselfProtoStr, protoIdGen)
 
-		GenProtoTomessage(path, sheetName, memberMap, fileProto, protoIdGen)
+		if errGenProto != nil {
+			return errors.Errorf("GenProtoTomessage 生成各自 proto失败 %v", errGenProto)
+		}
+
+		fmt.Println("写入各自proto文件：", ProtoPath+messageName+".proto")
+
+		errWrite := os.WriteFile(ProtoPath+messageName+".proto", []byte(itselfProtoStr.String()), 0777)
+
+		if errWrite != nil {
+			return errors.Errorf("写入各自proto文件失败 %v", errWrite)
+		}
+
+		errGenProto = GenProtoTomessage(path, sheetName, memberMap, allProtoBuilder, protoIdGen)
+
+		if errGenProto != nil {
+			return errors.Errorf("GenProtoTomessage 生成总体 proto失败 %v", errGenProto)
+		}
 	}
 
 	return nil
 }
 
-func GenItselfProto(protoPath string, messagemName string) (*os.File, error) {
+func GenItselfProtoStr(protoPath string, messageName string, builder *strings.Builder) error {
 
 	if strings.HasSuffix(protoPath, "confpb.proto") == true {
 		protoPath = protoPath[:len(protoPath)-12]
 	}
 
-	itselfProto := protoPath + messagemName + ".proto"
+	itselfProto := protoPath + messageName + ".proto"
 
 	if _, err := os.Stat(itselfProto); err == nil {
 		errRemove := os.Remove(itselfProto)
 		if errRemove != nil {
-			return nil, errors.Errorf("删除proto文件失败 %v", errRemove)
+			return errors.Errorf("删除proto文件失败 %v", errRemove)
 		}
 	}
 
 	fileProto, errNewProto := os.OpenFile(itselfProto, os.O_CREATE, 0777)
 
 	if errNewProto != nil {
-		return nil, errors.Errorf("创建proto文件失败 %v", errNewProto)
+		return errors.Errorf("创建proto文件失败 %v", errNewProto)
 	}
 
+	fileProto.Close()
+
 	//消息头部
-	fileProto.WriteString("syntax = \"proto3\";\n\n")
-	fileProto.WriteString("package conf;\n\n")
-	fileProto.WriteString("option go_package=\"" + protoPath + ";conf\";")
-	return fileProto, nil
+	_, err := builder.WriteString("syntax = \"proto3\";\n\npackage conf;\n\noption go_package=\"" + protoPath + ";conf\";")
+
+	if err != nil {
+		return errors.Errorf("GenItselfProtoStr builder.WriteString Proto Head Err:%v", err)
+	}
+
+	return nil
 }
 
-func GenProtoTomessage(path string, sheetName string, memberMap map[string]string, fileProto *os.File, protoIdGen *ProtoIDGen.ProtoIdGen) {
+func GenProtoTomessage(path string, sheetName string, memberMap map[string]string, builder *strings.Builder, protoIdGen *ProtoIDGen.ProtoIdGen) error {
 	//获取文件名带后缀
 	filenameWithSuffix := filepath.Base(path)
 	//获取文件后缀
@@ -256,9 +290,11 @@ func GenProtoTomessage(path string, sheetName string, memberMap map[string]strin
 
 	messageName := ProtoIDGen.GetMessageName(filenameOnly, sheetName)
 
-	fileProto.WriteString("\n")
-	fileProto.WriteString("message  " + messageName + "   {\n")
-	fileProto.WriteString("\n")
+	_, errProtoStr := builder.WriteString("\nmessage  " + messageName + "   {\n\n")
+
+	if errProtoStr != nil {
+		return errors.Errorf("builder.WriteString Proto Head Err:%v", errProtoStr)
+	}
 
 	for k, v := range memberMap {
 		strColType := v
@@ -270,10 +306,20 @@ func GenProtoTomessage(path string, sheetName string, memberMap map[string]strin
 
 		writeStr := "    " + v + "   " + k + " = " + strconv.Itoa(protoIdGen.GetTypeFieldId(filenameOnly, fieldName)) + ";\n\n"
 
-		fileProto.WriteString(writeStr)
+		_, errProtoStr = builder.WriteString(writeStr)
+
+		if errProtoStr != nil {
+			return errors.Errorf("builder.WriteString Proto Body Err:%v", errProtoStr)
+		}
 	}
 
-	fileProto.WriteString("}\n")
+	_, errProtoStr = builder.WriteString("}\n")
+
+	if errProtoStr != nil {
+		return errors.Errorf("builder.WriteString Proto End Err:%v", errProtoStr)
+	}
+
+	return nil
 }
 
 func getProtoType(titleType string) string {
