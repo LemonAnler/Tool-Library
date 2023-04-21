@@ -1,7 +1,6 @@
 package filemode
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,23 +46,20 @@ func Mkdir(path string, mode os.FileMode) error {
 // MkdirAll creates all missing directories in a provided paths, and chmods them.
 func MkdirAll(path string, mode os.FileMode) error {
 
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		fmt.Println("Error in MkdirAll: ", err)
-		return err
-	}
-
-	abs = filepath.ToSlash(abs)
-	elements := strings.Split(abs, "/")
+	elements := strings.Split(path, "/")
 
 	cumulativePath := ""
 
 	for _, e := range elements {
 
+		if e == "." {
+			continue
+		}
+
 		cumulativePath = filepath.Join(cumulativePath, e)
 
 		if cumulativePath != "" {
-			if _, err = os.Stat(cumulativePath); os.IsNotExist(err) {
+			if _, err := os.Stat(cumulativePath); os.IsNotExist(err) {
 				err = Mkdir(cumulativePath, mode)
 				if err != nil {
 					return err
