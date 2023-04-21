@@ -229,8 +229,6 @@ func genProtoByTable(path string, ProtoPath string, allProtoBuilder *strings.Bui
 			return errors.Errorf("GenProtoTomessage 生成各自 proto失败 %v", errGenProto)
 		}
 
-		fmt.Println("写入各自proto文件：", ProtoPath+messageName+".proto")
-
 		errWrite := os.WriteFile(ProtoPath+messageName+".proto", []byte(itselfProtoStr.String()), 0777)
 
 		if errWrite != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	conf_tool "Tool-Library/components/conf-tool"
+	"Tool-Library/components/filemode"
 	"Tool-Library/components/md5"
 	"bytes"
 	"flag"
@@ -11,7 +12,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
-	"os"
 )
 
 var httpAddr = flag.String("httpAddr", "http://110.40.227.205:7787/client/cs/", "获取CS http地址")
@@ -67,7 +67,7 @@ func main() {
 		logrus.Errorf("解压缩失败：%s", err)
 	}
 
-	err = os.MkdirAll(*csPath, 777)
+	err = filemode.MkdirAll(*csPath, 777)
 
 	if err != nil {
 		logrus.Errorf("创建get-cs文件夹失败：%s", err)

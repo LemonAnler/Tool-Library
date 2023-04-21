@@ -1,6 +1,6 @@
 rm gen/exceltodb*.zip
 
-go build -o exceltodb.exe ./Cmd/excel-to-db/main.go
+go build -o exceltodb.exe ./cmd/excel-to-db/main.go
 
 cp -rf exceltodb.exe  bin/
 

@@ -57,13 +57,11 @@ func SaveGen(protoIdGen *ProtoIdGen, idGenNamePath string) error {
 		return errorEncode
 	}
 
-	fileGen, errNewGen := os.OpenFile(idGenNamePath, os.O_CREATE, 0777)
+	err := os.WriteFile(idGenNamePath, data, 0777)
 
-	if errNewGen != nil {
-		return errors.Errorf("创建id_Gen文件失败 %v", errNewGen)
+	if err != nil {
+		return errors.Errorf("保存ProtoID记录失败，idGenNamePath：%v  Err:%v ", idGenNamePath, err)
 	}
-
-	fileGen.WriteString(string(data))
 
 	return nil
 }

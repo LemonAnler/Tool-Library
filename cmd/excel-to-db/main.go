@@ -5,11 +5,17 @@ import (
 	"Tool-Library/components/VersionTxtGen"
 	conf_tool "Tool-Library/components/conf-tool"
 	"Tool-Library/components/excel-to-proto"
+	"Tool-Library/components/filemode"
+	"Tool-Library/shared/config"
 	"flag"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 	"os"
+	"runtime/debug"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -47,13 +53,13 @@ func main() {
 
 	startTime := time.Now()
 
-	errorMkdir := os.MkdirAll(genPath, os.ModePerm)
+	errorMkdir := filemode.MkdirAll(genPath, os.ModePerm)
 	if errorMkdir != nil {
 		fmt.Println("创建gen目录失败 Err:", errorMkdir)
 		return
 	}
 
-	errorCreateProto := os.MkdirAll(ProtoPath, 777)
+	errorCreateProto := filemode.MkdirAll(ProtoPath, 777)
 
 	if errorCreateProto != nil {
 		fmt.Println("创建proto目录失败 Err:", errorCreateProto)
@@ -109,19 +115,54 @@ func main() {
 func GenerateProtoToCs(csPath string, ProtoPath string) error {
 	fmt.Println("\n --------cs生成开始--------")
 
-	errorMkdir := os.MkdirAll(csPath, 777)
+	errorMkdir := filemode.MkdirAll(csPath, 777)
 	if errorMkdir != nil {
 		return errors.Errorf("创建cs目录失败 Err:%v ", errorMkdir)
 	}
 
-	conf_tool.RunCommand("pwd")
-
-	conf_tool.RunCommand("csPath", csPath, ProtoPath+"confpb*.proto")
-
-	err := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+"confpb*.proto")
-
+	fs, err := config.ReadDir(ProtoPath)
 	if err != nil {
-		return errors.Errorf("生成cs失败 Err:%v ", err)
+		return errors.Wrapf(err, "读取文件夹失败，root: %s", ProtoPath)
+	}
+
+	wg := &sync.WaitGroup{}
+	var loadErrorRef atomic.Value
+
+	loadMux := &sync.Mutex{}
+
+	for _, f := range fs {
+
+		if strings.HasPrefix(f.Name(), "confpa") || f.IsDir() {
+			continue
+		}
+
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			defer func() {
+				if errRecover := recover(); errRecover != nil {
+					fmt.Println("GenerateProto error 生成失败,Err:", errRecover)
+					debug.PrintStack()
+				}
+			}()
+
+			errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+f.Name())
+
+			if errRun != nil {
+				loadErrorRef.Store(errors.Errorf("生成CS失败:%v", errRun))
+				return
+			}
+
+			loadMux.Lock()
+			defer loadMux.Unlock()
+		}()
+	}
+
+	wg.Wait()
+
+	if loadError := loadErrorRef.Load(); loadError != nil {
+		return errors.Errorf("多线程生成cs,error, %v", loadError)
 	}
 
 	fmt.Println("\n--------cs生成结束--------")

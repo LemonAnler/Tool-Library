@@ -1,6 +1,7 @@
 package conf_tool
 
 import (
+	"Tool-Library/components/filemode"
 	"Tool-Library/shared/config"
 	"archive/zip"
 	"bytes"
@@ -175,7 +176,7 @@ func WriteFile(filename string, data []byte) error {
 		return nil
 	}
 
-	err := os.MkdirAll(path.Dir(filename), 777)
+	err := filemode.MkdirAll(path.Dir(filename), 777)
 	if err != nil {
 		return err
 	}

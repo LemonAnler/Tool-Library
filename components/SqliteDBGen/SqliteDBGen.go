@@ -2,6 +2,7 @@ package SqliteDBGen
 
 import (
 	"Tool-Library/components/VersionTxtGen"
+	"Tool-Library/components/filemode"
 	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
@@ -28,7 +29,7 @@ var isMarshal = true
 
 func GenerateSqliteDB(confPath string, confProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
 
-	errorMkdir := os.MkdirAll(dbGenPathStr, 777)
+	errorMkdir := filemode.MkdirAll(dbGenPathStr, 777)
 	if errorMkdir != nil {
 		return errors.Errorf("创建genDBPath目录 Err:%v", dbGenPathStr)
 	}
@@ -311,7 +312,7 @@ func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescript
 			errSaveDB := saveToMemoryDB(srcDB, keyStr, msg)
 
 			if errSaveDB != nil {
-				return errSaveDB
+				return errors.Errorf("数据库存盘失败 err %v path:%v sheetName:%v", errSaveDB, path, sheetName)
 			}
 		}
 
@@ -373,7 +374,7 @@ func saveToMemoryDB(srcDB *sql.DB, keyStr string, m *dynamic.Message) error {
 	}
 
 	if errInsert != nil {
-		return errors.Errorf("内存数据库插入keyStr数据失败,id:%s,err %v", keyStr, errInsert)
+		return errors.Errorf("内存数据库插入keyStr数据失败,id:%s,err %v data:%v", keyStr, errInsert, m.String())
 	}
 
 	return nil
@@ -497,215 +498,6 @@ func GetDBTableName(filenameOnly string, sheetName string) string {
 
 func GetMessageName(filenameOnly string, sheetName string) string {
 	return "confpb" + filenameOnly + sheetName
-}
-
-func genConstantDB(constTableMap []string, fileDescriptor *desc.FileDescriptor, dbGenPathStr string) error {
-	if len(constTableMap) == 0 {
-		return nil
-	}
-
-	driverConns := []*sqlite3.SQLiteConn{}
-	curBackupDriverName := "sqlite3_backup_Constant"
-
-	sql.Register(curBackupDriverName, &sqlite3.SQLiteDriver{
-		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-			driverConns = append(driverConns, conn)
-			return nil
-		},
-	})
-
-	srcDB, errCreateSrcDB := sql.Open(curBackupDriverName, ":memory:")
-
-	if errCreateSrcDB != nil {
-		return errors.Errorf("数据库开启失败 err %v", errCreateSrcDB)
-	}
-
-	errPing := srcDB.Ping()
-	if errPing != nil {
-		return errors.Errorf("Failed to connect to the source database:%v", errPing)
-	}
-
-	createTableStr := "CREATE TABLE IF NOT EXISTS data  (id string PRIMARY KEY,data blob);"
-
-	_, errCreate := srcDB.Exec(createTableStr)
-
-	if errCreate != nil {
-		return errors.Errorf("内存数据库创建表失败，err %v", errCreate)
-	}
-
-	for _, v := range constTableMap {
-		fmt.Println(v)
-		strList := strings.Split(v, "_")
-
-		if len(strList) != 2 {
-			continue
-		}
-
-		path := strList[0]
-		sheetName := strList[1]
-
-		data, errRead := os.ReadFile(path)
-		if errRead != nil {
-			return errors.Errorf("读取const文件失败，err %v", errRead)
-		}
-
-		file, errOpenBinary := xlsx.OpenBinary(data)
-		if errOpenBinary != nil {
-			return errors.Wrapf(errOpenBinary, "解析const表格数据失败 OpenBinary 表名：%s", path)
-		}
-
-		// 找到需要处理sheet（读取sheet(list)）
-		constSheet := file.Sheet[sheetName]
-		if constSheet == nil {
-			return errors.Errorf("表格数据中没有找到constSheet页签 表名：%s 页签：%v", path, sheetName)
-		}
-
-		if len(constSheet.Rows) < starReadLine {
-			return errors.Errorf("表格数据中constSheet页签行数小于starReadLine 表名：%s 页签：%v", path, sheetName)
-		}
-
-		filenameOnly, msgDesc, errMsgGet := getMsgDesc(path, sheetName, fileDescriptor)
-
-		if errMsgGet != nil {
-			return errors.Errorf("获取const表名字和消息结果：%v", errMsgGet)
-		}
-
-		msg := dynamic.NewMessage(msgDesc)
-
-		titleRow := constSheet.Rows[1]
-		defaultRow := constSheet.Rows[4]
-		curRow := constSheet.Rows[starReadLine]
-
-		for k := 0; k < len(curRow.Cells); k++ {
-
-			if k >= len(titleRow.Cells) {
-				continue
-			}
-
-			title := titleRow.Cells[k].String()
-
-			if title == "" {
-				continue
-			}
-
-			curCell := curRow.Cells[k]
-
-			for _, fieldDesc := range msgDesc.GetFields() {
-				fieldName := fieldDesc.GetName()
-
-				if strings.ToLower(fieldName) == strings.ToLower(title) {
-
-					cellStr := curCell.String()
-
-					if strings.TrimSpace(cellStr) == "" {
-						//为空之后直接去拿默认值
-
-						if k < len(defaultRow.Cells) && strings.TrimSpace(defaultRow.Cells[k].String()) != "" {
-							cellStr = defaultRow.Cells[k].String()
-						} else {
-							continue
-						}
-					}
-
-					if strings.HasPrefix(cellStr, "**") {
-						continue
-					}
-
-					if fieldDesc.GetType().String() == "TYPE_INT32" {
-
-						value, err := strconv.Atoi(cellStr)
-
-						if err != nil {
-							return errors.Errorf("Const表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, 6, k+1, curCell.String(), err)
-						}
-
-						if fieldDesc.IsRepeated() {
-							msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(value))
-						} else {
-							msg.SetFieldByName(fieldDesc.GetName(), int32(value))
-						}
-					}
-
-					if fieldDesc.GetType().String() == "TYPE_STRING" {
-
-						value := cellStr
-
-						if fieldDesc.IsRepeated() {
-							msg.AddRepeatedFieldByName(fieldDesc.GetName(), value)
-						} else {
-							msg.SetFieldByName(fieldDesc.GetName(), value)
-						}
-					}
-
-					if fieldDesc.GetType().String() == "TYPE_BOOL" {
-
-						value, err := strconv.ParseBool(cellStr)
-
-						if err != nil {
-							return errors.Errorf("行数:%d,列数：%d 对应BOOL数据转换失败：%v ERR:%v", 6, k, curCell.String(), err)
-						}
-
-						if fieldDesc.IsRepeated() {
-
-						} else {
-							msg.SetFieldByName(fieldDesc.GetName(), value)
-						}
-					}
-
-					if fieldDesc.GetType().String() == "TYPE_FLOAT" {
-
-						value, err := strconv.ParseFloat(cellStr, 32)
-
-						if err != nil {
-							return errors.Errorf("表格数据中FLOAT字段类型错误 %v", err)
-						}
-
-						if fieldDesc.IsRepeated() {
-							msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(value))
-						} else {
-							msg.SetFieldByName(fieldDesc.GetName(), float32(value))
-						}
-					}
-					break
-				}
-			}
-		}
-
-		//写入文件
-
-		dataStr, errMarshal := msg.Marshal()
-
-		if errMarshal != nil {
-			return errors.Errorf("Marshal err %v", errMarshal)
-		}
-
-		keyStr := GetMessageName(filenameOnly, sheetName)
-
-		_, err := srcDB.Exec("INSERT INTO data (id, data) VALUES (?, ?)", keyStr, dataStr)
-
-		if err != nil {
-			return errors.Errorf("内存数据库插入keyStr数据失败,id:%s,err %v", keyStr, err)
-		}
-	}
-
-	dbName := "Constant.db"
-
-	destDb, errCreateDest := sql.Open(curBackupDriverName, dbGenPathStr+dbName)
-
-	if errCreateDest != nil {
-		return errors.Errorf("数据库存盘失败，sql.Open err %v", errCreateDest)
-	}
-
-	errPingDest := destDb.Ping()
-	if errPingDest != nil {
-		return errors.Errorf("Failed to connect to the destination database:%v", errPingDest)
-	}
-
-	if errSaveToDB := saveToDB(driverConns, destDb, srcDB, "Constant", ""); errSaveToDB != nil {
-		return errors.Errorf("Constant数据库存盘失败 err %v", errSaveToDB)
-	}
-
-	return nil
 }
 
 func getMsgDesc(path string, sheetName string, fileDescriptor *desc.FileDescriptor) (string, *desc.MessageDescriptor, error) {

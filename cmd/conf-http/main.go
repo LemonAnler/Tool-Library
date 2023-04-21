@@ -2,6 +2,7 @@ package main
 
 import (
 	conf_tool "Tool-Library/components/conf-tool"
+	"Tool-Library/components/filemode"
 	"crypto/md5"
 	"encoding/hex"
 	"flag"
@@ -150,10 +151,10 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 
 	defer os.RemoveAll(tempDir)
 
-	err = os.MkdirAll(dbPath, 777)
+	err = filemode.MkdirAll(dbPath, 777)
 
 	if err != nil {
-		return errors.Errorf("os.MkdirAll(%s) fail, err: %v", dbPath, err)
+		return errors.Errorf("filemode.MkdirAll(%s) fail, err: %v", dbPath, err)
 	}
 
 	fileMap, err := conf_tool.UnpackData(packBytes)
@@ -282,13 +283,13 @@ func GenerateCs(configJson *ConfigCsJson, packBytes []byte) error {
 	tempConfDir, err := os.MkdirTemp("gen/", "excel-")
 
 	if err != nil {
-		return errors.Errorf("os.MkdirAll(%s) fail, err: %v", tempConfDir, err)
+		return errors.Errorf("filemode.MkdirAll(%s) fail, err: %v", tempConfDir, err)
 	}
 
 	tempCsDir, err := os.MkdirTemp("gen/", "cs-")
 
 	if err != nil {
-		return errors.Errorf("os.MkdirAll(%s) fail, err: %v", tempCsDir, err)
+		return errors.Errorf("filemode.MkdirAll(%s) fail, err: %v", tempCsDir, err)
 	}
 
 	defer os.RemoveAll(tempConfDir)
@@ -296,7 +297,7 @@ func GenerateCs(configJson *ConfigCsJson, packBytes []byte) error {
 	defer os.RemoveAll(tempCsDir)
 
 	if err != nil {
-		return errors.Errorf("os.MkdirAll(%s) fail, err: %v", dbPath, err)
+		return errors.Errorf("filemode.MkdirAll(%s) fail, err: %v", dbPath, err)
 	}
 
 	fileMap, err := conf_tool.UnpackData(packBytes)
