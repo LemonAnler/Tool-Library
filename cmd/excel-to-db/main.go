@@ -4,16 +4,13 @@ import (
 	"Tool-Library/components/SqliteDBGen"
 	"Tool-Library/components/VersionTxtGen"
 	conf_tool "Tool-Library/components/conf-tool"
-	"Tool-Library/components/excel-to-proto"
+	excel_to_proto "Tool-Library/components/excel-to-proto"
 	"Tool-Library/components/filemode"
-	"Tool-Library/shared/config"
 	"flag"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 	"os"
 	"runtime/debug"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -50,19 +47,13 @@ func main() {
 	fmt.Println("数据库生成路径：", genDBPath)
 	fmt.Println("cs生成路径：", csPath)
 	fmt.Println("配置表路径：", confPath)
+	fmt.Println("Proto路径：", ProtoPath)
 
 	startTime := time.Now()
 
 	errorMkdir := filemode.MkdirAll(genPath, os.ModePerm)
 	if errorMkdir != nil {
 		fmt.Println("创建gen目录失败 Err:", errorMkdir)
-		return
-	}
-
-	errorCreateProto := filemode.MkdirAll(ProtoPath, 777)
-
-	if errorCreateProto != nil {
-		fmt.Println("创建proto目录失败 Err:", errorCreateProto)
 		return
 	}
 
@@ -120,7 +111,7 @@ func GenerateProtoToCs(csPath string, ProtoPath string) error {
 		return errors.Errorf("创建cs目录失败 Err:%v ", errorMkdir)
 	}
 
-	fs, err := config.ReadDir(ProtoPath)
+	fs, err := os.ReadDir(ProtoPath)
 	if err != nil {
 		return errors.Wrapf(err, "读取文件夹失败，root: %s", ProtoPath)
 	}
@@ -132,9 +123,13 @@ func GenerateProtoToCs(csPath string, ProtoPath string) error {
 
 	for _, f := range fs {
 
-		if strings.HasPrefix(f.Name(), "confpa") || f.IsDir() {
+		if f.Name() == "confpa.proto" || f.IsDir() {
 			continue
 		}
+
+		path := ProtoPath + f.Name()
+
+		fmt.Println("生成CS文件:", f.Name())
 
 		wg.Add(1)
 
@@ -147,7 +142,9 @@ func GenerateProtoToCs(csPath string, ProtoPath string) error {
 				}
 			}()
 
-			errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+f.Name())
+			errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, path)
+
+			fmt.Println(path)
 
 			if errRun != nil {
 				loadErrorRef.Store(errors.Errorf("生成CS失败:%v", errRun))

@@ -2,6 +2,7 @@ package excel_to_proto
 
 import (
 	"Tool-Library/components/ProtoIDGen"
+	"Tool-Library/components/filemode"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/tealeg/xlsx"
@@ -58,13 +59,20 @@ func GenerateExcelToProto(isUpdateConf bool, confPath string, idGenPath string, 
 
 func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, ProtoPath string) error {
 
-	confProtoPath := ProtoPath + "confpa.proto"
-	//清除原来的Proto直接重新生成
-	_, errProtoIsExist := os.Stat(confProtoPath)
+	//清除原来的Proto文件夹直接重新生成
+	_, errProtoIsExist := os.Stat(ProtoPath)
 
 	if !os.IsNotExist(errProtoIsExist) {
-		os.Remove(confProtoPath)
+		os.RemoveAll(ProtoPath)
 	}
+
+	errorCreateProto := filemode.MkdirAll(ProtoPath, 777)
+
+	if errorCreateProto != nil {
+		return errors.Errorf("创建proto目录失败 Err:%v", errorCreateProto)
+	}
+
+	confProtoPath := ProtoPath + "confpa.proto"
 
 	fileProto, errNewProto := os.OpenFile(confProtoPath, os.O_CREATE, 0777)
 	defer fileProto.Close()

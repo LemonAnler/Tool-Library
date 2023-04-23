@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"os"
 )
 
 var httpAddr = flag.String("httpAddr", "http://110.40.227.205:7787/client/cs/", "获取CS http地址")
@@ -67,6 +68,14 @@ func main() {
 		logrus.Errorf("解压缩失败：%s", err)
 	}
 
+	//清除原来的Proto文件夹直接重新生成
+	_, errCsIsExist := os.Stat(*csPath)
+
+	if !os.IsNotExist(errCsIsExist) {
+		fmt.Println("删除原来的cs文件夹")
+		os.RemoveAll(*csPath)
+	}
+
 	err = filemode.MkdirAll(*csPath, 777)
 
 	if err != nil {
@@ -74,10 +83,10 @@ func main() {
 	}
 
 	for filename, fileBytes := range fileMap {
-		// 将excel写入到本地磁盘
-		excelPath := *csPath + filename
-		if err = conf_tool.WriteFile(excelPath, fileBytes); err != nil {
-			fmt.Println("写入excel失败：", err, excelPath)
+		// 将cs写入到本地磁盘
+		targetPath := *csPath + filename
+		if err = conf_tool.WriteFile(targetPath, fileBytes); err != nil {
+			fmt.Println("写入excel失败：", err, targetPath)
 			return
 		}
 	}

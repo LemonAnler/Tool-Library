@@ -134,7 +134,7 @@ func ZipFiles(root string) ([]byte, error) {
 		}
 	}
 
-	fmt.Println("压缩文件数量：", len(fileMap))
+	fmt.Println("压缩路径：", root, "压缩文件数量：", len(fileMap))
 
 	zipFile, err := packData(fileMap)
 	if err != nil {
@@ -179,6 +179,12 @@ func WriteFile(filename string, data []byte) error {
 	err := filemode.MkdirAll(path.Dir(filename), 777)
 	if err != nil {
 		return err
+	}
+
+	_, errIsExist := os.Stat(filename)
+
+	if !os.IsNotExist(errIsExist) {
+		os.Remove(filename)
 	}
 
 	return os.WriteFile(filename, data, 777)
