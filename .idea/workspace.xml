@@ -5,12 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4d606aee-feb0-46f0-9d8d-da35ceccdf2a" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/Tool-Library.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Tool-Library.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/excel-to-db/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/excel-to-db/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/get-cs/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/get-cs/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/conf-tool/conf-tool.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/conf-tool/conf-tool.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
