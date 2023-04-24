@@ -327,7 +327,7 @@ func GenerateCs(configJson *ConfigCsJson, packBytes []byte) error {
 		}
 	}
 
-	errorRun := conf_tool.RunCommand("./bin/exceltodb.exe", "--dbPath="+dbPath, "--conf="+path.Dir(conf_tool.TransPath(tempConfDir)), "--csPath="+path.Dir(conf_tool.TransPath(tempCsDir)))
+	errorRun := conf_tool.RunCommand("./bin/exceltodb.exe", "--dbPath="+dbPath, "--conf="+path.Dir(conf_tool.TransPath(tempConfDir)), "--csPath="+path.Dir(conf_tool.TransPath(tempCsDir)), "--onlyCs=true")
 
 	if errorRun != nil {
 		return errors.Errorf("EXE 执行失败:%v", errorRun)

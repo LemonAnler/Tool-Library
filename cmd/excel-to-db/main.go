@@ -40,14 +40,15 @@ func main() {
 	confPath := "conf"
 	flag.StringVar(&confPath, "conf", confPath, "cs生成指定路径路径")
 
-	isTest := false
-	flag.BoolVar(&isTest, "isTest", isTest, "是否进行测试")
+	onlyCs := false
+	flag.BoolVar(&onlyCs, "onlyCs", onlyCs, "是否只生成cs")
 	flag.Parse()
 
 	fmt.Println("数据库生成路径：", genDBPath)
 	fmt.Println("cs生成路径：", csPath)
 	fmt.Println("配置表路径：", confPath)
 	fmt.Println("Proto路径：", ProtoPath)
+	fmt.Println("onlyCs：", onlyCs)
 
 	startTime := time.Now()
 
@@ -69,6 +70,11 @@ func main() {
 			fmt.Println("生成前端cs失败 Err: ", errProtoToCs)
 			return
 		}
+	}
+
+	if onlyCs {
+		fmt.Println("只生成cs，结束")
+		return
 	}
 
 	//清理数据库
