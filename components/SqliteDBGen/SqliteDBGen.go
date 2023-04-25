@@ -27,6 +27,10 @@ var starReadLine = 5
 
 var isMarshal = true
 
+type DBVersion struct {
+	dbMap map[string]struct{}
+}
+
 func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
 
 	errorMkdir := filemode.MkdirAll(dbGenPathStr, 777)

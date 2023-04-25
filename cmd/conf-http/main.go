@@ -3,8 +3,7 @@ package main
 import (
 	conf_tool "Tool-Library/components/conf-tool"
 	"Tool-Library/components/filemode"
-	"crypto/md5"
-	"encoding/hex"
+	"Tool-Library/components/md5"
 	"flag"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -102,7 +101,7 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 	if !os.IsNotExist(err) {
 		fmt.Println("存在对应版本:", dbPath+versionName)
 		confJson.VersionPath = versionName
-		confJson.VersionMd5 = md5String(verionData)
+		confJson.VersionMd5 = md5.String(verionData)
 
 		writeConfigJson(w, confJson)
 		return
@@ -111,7 +110,7 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 	//重新生成
 	data, err := io.ReadAll(r.Body)
 
-	dataMd5 := md5String(data)
+	dataMd5 := md5.String(data)
 	dataSize := int64(len(data))
 
 	if fileMd5 != dataMd5 || fileSizeInt64 != dataSize {
@@ -128,11 +127,6 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 
 	writeConfigJson(w, confJson)
 	return
-}
-
-func md5String(b []byte) string {
-	sum := md5.Sum(b)
-	return hex.EncodeToString(sum[:])
 }
 
 // data是个zip压缩文件
@@ -194,7 +188,7 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 		return errors.Errorf("不存在版本文件")
 	}
 
-	dataMd5 := md5String(packBytes)
+	dataMd5 := md5.String(packBytes)
 	dataSize := int64(len(packBytes))
 
 	os.Rename(dbPath+"version.txt", dbPath+getVersionName(dataMd5, dataSize))
@@ -229,6 +223,9 @@ func getVersionName(fileMd5 string, fileSizeInt64 int64) string {
 }
 
 func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("------开始生成前端CS:clientCsHandleFunc------")
+
 	// 从header中获取md5值
 	fileMd5 := r.Header.Get("file_md5")
 	fileSize := r.Header.Get("file_size")
@@ -250,7 +247,7 @@ func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
 
 	data, err := io.ReadAll(r.Body)
 
-	dataMd5 := md5String(data)
+	dataMd5 := md5.String(data)
 	dataSize := int64(len(data))
 
 	if fileMd5 != dataMd5 || fileSizeInt64 != dataSize {
@@ -269,6 +266,9 @@ func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
 		Code: 200,
 		Data: confcsJson,
 	})
+
+	fmt.Println("------生成前端CS:clientCsHandleFunc结束------")
+
 	return
 }
 
@@ -325,7 +325,7 @@ func GenerateCs(configJson *ConfigCsJson, packBytes []byte) error {
 		}
 	}
 
-	errorRun := conf_tool.RunCommand("./bin/exceltodb.exe", "--dbPath="+dbPath, "--conf="+path.Dir(conf_tool.TransPath(tempConfDir)), "--csPath="+path.Dir(conf_tool.TransPath(tempCsDir)), "--onlyCs=true")
+	errorRun := conf_tool.RunCommand("./bin/csGen.exe", "--conf="+path.Dir(conf_tool.TransPath(tempConfDir)), "--csPath="+path.Dir(conf_tool.TransPath(tempCsDir)))
 
 	if errorRun != nil {
 		return errors.Errorf("EXE 执行失败:%v", errorRun)

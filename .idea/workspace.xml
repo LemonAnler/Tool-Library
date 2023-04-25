@@ -6,10 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="4d606aee-feb0-46f0-9d8d-da35ceccdf2a" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/conf-http/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/conf-http/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/excel-to-db/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/excel-to-db/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/ProtoIDGen/proto_id_gen.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/ProtoIDGen/proto_id_gen.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/SqliteDBGen/SqliteDBGen.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/SqliteDBGen/SqliteDBGen.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/md5/md5.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/md5/md5.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,9 +55,10 @@
     "git-widget-placeholder": "main",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "D:/gopath/src/Tool-Library",
+    "last_opened_file_path": "D:/gopath/src/Tool-Library/cmd/cs-gen",
     "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)"
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm"
   }
 }]]></component>
   <component name="ReadonlyStatusHandler">
@@ -63,21 +66,21 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\gopath\src\Tool-Library\cmd\cs-gen" />
       <recent name="D:\gopath\src\github.com\Tool-Library\cmd\conf-http" />
       <recent name="D:\gopath\src\github.com\Tool-Library\cmd\get-cs" />
       <recent name="D:\gopath\src\github.com\Tool-Library\bin" />
       <recent name="D:\gopath\src\github.com\Tool-Library\shared" />
-      <recent name="D:\gopath\src\github.com\Tool-Library\Cmd\excel-to-db\Conf" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\gopath\src\Tool-Library\cmd" />
       <recent name="G:\gopath\src\github.com\conf-http" />
       <recent name="D:\gopath\src\github.com\Tool-Library\components" />
       <recent name="D:\gopath\src\github.com\Tool-Library" />
       <recent name="D:\gopath\src\github.com\Tool-Library\Cmd\excel-to-db" />
-      <recent name="D:\Tool-Library\Cmd\conf-http" />
     </key>
   </component>
-  <component name="RunManager" selected="Go 构建.go build Tool-Library/cmd/conf-http">
+  <component name="RunManager" selected="Go 构建.go build Tool-Library/cmd/cs-gen">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="Tool-Library" />
       <working_directory value="$PROJECT_DIR$" />
@@ -86,15 +89,6 @@
       <package value="github.com/Tool-Library" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build Tool-Library/Cmd/excel-to-db" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="Tool-Library" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="Tool-Library/Cmd/excel-to-db" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/Cmd/excel-to-db/main.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build Tool-Library/cmd/build" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
@@ -113,6 +107,15 @@
       <package value="Tool-Library/cmd/conf-http" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$/cmd/conf-http/main.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build Tool-Library/cmd/cs-gen" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="Tool-Library" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="Tool-Library/cmd/cs-gen" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/cmd/cs-gen/main.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build Tool-Library/cmd/excel-to-db" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
@@ -146,11 +149,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go 构建.go build Tool-Library/cmd/cs-gen" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/conf-http" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/excel-to-db" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/get-cs" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/build" />
-        <item itemvalue="Go 构建.go build Tool-Library/Cmd/excel-to-db" />
       </list>
     </recent_temporary>
   </component>
@@ -177,9 +180,9 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/cmd/excel-to-db/main.go</url>
-          <line>24</line>
-          <option name="timeStamp" value="1" />
+          <url>file://$PROJECT_DIR$/cmd/cs-gen/main.go</url>
+          <line>13</line>
+          <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

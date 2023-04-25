@@ -4,6 +4,8 @@ import (
 	"Tool-Library/components/ProtoIDGen"
 	conf_tool "Tool-Library/components/conf-tool"
 	"Tool-Library/components/filemode"
+	"Tool-Library/components/md5"
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/tealeg/xlsx"
@@ -19,17 +21,14 @@ import (
 
 var starReadLine = 5
 
-func GenerateExcelToProto(isUpdateConf bool, confPath string, idGenPath string, ProtoPath string) error {
-	//更新配置
+var ProtoVersionName = "ProtoVersion.json"
 
-	fmt.Println("     git 自动更新关闭    ")
-	if isUpdateConf {
-		e := conf_tool.RunCommand("cd", "conf", "&&", "git", "reset", "--hard", "origin/master")
+type ProtoVersion struct {
+	ExcelMd5  string
+	ProtoName string
+}
 
-		if e != nil {
-			return errors.Errorf("更新配置失败 Err:%v ", e)
-		}
-	}
+func GenerateExcelToProto(confPath string, idGenPath string, ProtoPath string) error {
 
 	fmt.Println("--------开始加载ProtoID记录--------")
 	//加载旧ProtoID表进来
@@ -43,11 +42,38 @@ func GenerateExcelToProto(isUpdateConf bool, confPath string, idGenPath string, 
 
 	fmt.Println("--------加载ProtoID记录成功--------")
 
+	fmt.Println("--------开始加载ProtoMd5Json--------")
+
+	protoVersionPath := ProtoPath + ProtoVersionName
+
+	protoVersionJson, errProtoVersion := os.ReadFile(protoVersionPath)
+	if errProtoVersion != nil && os.IsNotExist(errProtoVersion) {
+		//不存在直接创建
+		fmt.Println("对应路径下不存在ProtoVersion，直接创建,路径：", protoVersionPath)
+		fp, errCreate := os.Create(idGenPath) // 如果文件已存在，会将文件清空。
+		if errCreate != nil {
+			return errors.Errorf("创建在对应路径下不存在ProtoVersion失败，Err: %v", errCreate)
+		}
+
+		protoVersionJson, errProtoVersion = os.ReadFile(idGenPath)
+		if errProtoVersion != nil {
+			return errors.Errorf("创建在ProtoID记录后，重新读取失败: %v", errProtoVersion)
+		}
+		// defer延迟调用
+		defer fp.Close() //关闭文件，释放资源。
+	}
+
+	protoVersionData := map[string]ProtoVersion{}
+
+	json.Unmarshal(protoVersionJson, &protoVersionData)
+
+	fmt.Println("--------加载ProtoMd5Json结束--------")
+
 	fmt.Println("--------开始生成Proto--------")
 
 	//加载表去生成对应proto
 	timeGenerate := time.Now()
-	errGenerate := readDirToGenerateProto(protoIdGen, confPath, ProtoPath)
+	errGenerate := ReadDirToGenerateProto(protoIdGen, confPath, ProtoPath, "", protoVersionData)
 	fmt.Println("生成Proto耗时：", time.Since(timeGenerate))
 
 	if errGenerate != nil {
@@ -58,22 +84,47 @@ func GenerateExcelToProto(isUpdateConf bool, confPath string, idGenPath string, 
 
 	ProtoIDGen.SaveGen(protoIdGen, idGenPath)
 
+	fmt.Println("更新记录ProtoVersion数量：")
+	jsonBytes, errJson := json.Marshal(protoVersionData)
+
+	if errJson != nil {
+		return errors.Errorf("序列化protoVersionData报错 json.Marshal: %v", errJson)
+	}
+
+	fileProtoVersion, errNewProtoVersion := os.OpenFile(protoVersionPath, os.O_CREATE|os.O_TRUNC, 0777)
+	defer fileProtoVersion.Close()
+
+	if errNewProtoVersion != nil {
+		return errors.Errorf("写入版本文件失败path:%v  os.OpenFile: %v", protoVersionPath, errNewProtoVersion)
+	}
+
+	fileProtoVersion.Write(jsonBytes)
+
 	return nil
 }
 
-func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, ProtoPath string) error {
-
-	//清除原来的Proto文件夹直接重新生成
-	_, errProtoIsExist := os.Stat(ProtoPath)
-
-	if !os.IsNotExist(errProtoIsExist) {
-		os.RemoveAll(ProtoPath)
-	}
-
+func ReadDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, ProtoPath string, csPath string, protoVersionData map[string]ProtoVersion) error {
 	errorCreateProto := filemode.MkdirAll(ProtoPath, 777)
 
 	if errorCreateProto != nil {
 		return errors.Errorf("创建proto目录失败 Err:%v", errorCreateProto)
+	}
+
+	//清除原来的Proto文件夹直接重新生成
+
+	if csPath != "" {
+		_, errCsIsExist := os.Stat(csPath)
+
+		if !os.IsNotExist(errCsIsExist) {
+			fmt.Println("删除原来的cs文件夹")
+			os.RemoveAll(csPath)
+		}
+
+		errorCreateCs := filemode.MkdirAll(csPath, 777)
+
+		if errorCreateCs != nil {
+			return errors.Errorf("创建cs目录失败 Err:%v", errorCreateCs)
+		}
 	}
 
 	if strings.HasSuffix(confPath, "/") {
@@ -84,11 +135,16 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 	if fss, err := os.ReadDir(dirWithSep); err != nil {
 		return errors.Errorf("GenerateProto error 生成失败读取文件, %v", err)
 	} else {
-		fMap := make(map[string]struct{})
+
+		wg := &sync.WaitGroup{}
+		var loadErrorRef atomic.Value
+
+		loadMux := &sync.Mutex{}
+		timeGen := time.Now()
 		for _, f := range fss {
+
 			fName := f.Name()
 
-			path := dirWithSep + fName
 			if filepath.Ext(fName) != ".xlsx" {
 				continue
 			}
@@ -97,19 +153,7 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 				continue
 			}
 
-			fMap[path] = struct{}{}
-		}
-
-		fmt.Println("表格数量：", len(fMap))
-
-		wg := &sync.WaitGroup{}
-		var loadErrorRef atomic.Value
-
-		loadMux := &sync.Mutex{}
-		timeGen := time.Now()
-		for k := range fMap {
-
-			path := k
+			path := dirWithSep + fName
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -119,16 +163,15 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 						debug.PrintStack()
 					}
 				}()
+				loadMux.Lock()
+				defer loadMux.Unlock()
 
-				errGen := genProtoByTable(path, ProtoPath, protoIdGen)
+				errGen := genProtoByTable(path, ProtoPath, csPath, protoIdGen, protoVersionData)
 
 				if errGen != nil {
 					loadErrorRef.Store(errors.Errorf("genProtoByTable 表格：%v 生成Proto失败 Error：%v", path, errGen))
 					return
 				}
-
-				loadMux.Lock()
-				defer loadMux.Unlock()
 			}()
 		}
 
@@ -143,13 +186,47 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 	return nil
 }
 
-func genProtoByTable(path string, ProtoPath string, protoIdGen *ProtoIDGen.ProtoIdGen) error {
+func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *ProtoIDGen.ProtoIdGen, protoVersionData map[string]ProtoVersion) error {
 
 	data, errFileTable := os.ReadFile(path)
 
 	if errFileTable != nil {
 		return errors.Errorf("GenerateProto error 读取文件失败,path:%v %v", path, errFileTable)
 	}
+
+	//判定是否继续生成
+
+	//获取文件名带后缀
+	filenameWithSuffix := filepath.Base(path)
+	//获取文件后缀
+	fileSuffix := filepath.Ext(path)
+	//获取文件名
+	filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix)
+
+	needGen := true
+
+	if _, isOk := protoVersionData[filenameOnly]; isOk {
+		v := protoVersionData[filenameOnly]
+
+		if v.ExcelMd5 == md5.String(data) {
+			needGen = false
+			//虽然不需要读取数据了，但是 cs还是需要生成
+
+			if csPath != "" {
+				errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+v.ProtoName)
+
+				if errRun != nil {
+					return errors.Errorf("本次版本生成cs文件失败 %v", errRun)
+				}
+			}
+		}
+	}
+
+	if !needGen {
+		return nil
+	}
+
+	fmt.Println("开始生成表格Proto：", path)
 
 	file, errOpenBinary := xlsx.OpenBinary(data)
 
@@ -220,34 +297,57 @@ func genProtoByTable(path string, ProtoPath string, protoIdGen *ProtoIDGen.Proto
 			}
 		}
 
-		//获取文件名带后缀
-		filenameWithSuffix := filepath.Base(path)
-		//获取文件后缀
-		fileSuffix := filepath.Ext(path)
-		//获取文件名
-		filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix)
-
 		messageName := ProtoIDGen.GetMessageName(filenameOnly, sheetName)
 
-		itselfProtoStr := strings.Builder{}
+		builder := strings.Builder{}
 
-		errItself := GenItselfProtoStr(ProtoPath, messageName, &itselfProtoStr)
+		itselfProto := ProtoPath + messageName + ".proto"
 
-		if errItself != nil {
-			return errors.Errorf("GenItselfProtoStr 生成自身proto Str失败 %v", errItself)
+		if _, err := os.Stat(itselfProto); err == nil {
+			errRemove := os.Remove(itselfProto)
+			if errRemove != nil {
+				return errors.Errorf("删除proto文件失败 %v", errRemove)
+			}
+		}
+
+		fileProto, errNewProto := os.OpenFile(itselfProto, os.O_CREATE, 0777)
+		fileProto.Close()
+
+		if errNewProto != nil {
+			return errors.Errorf("创建proto文件失败 %v", errNewProto)
+		}
+
+		//消息头部
+		_, err := builder.WriteString("syntax = \"proto3\";\n\npackage conf;\n\noption go_package=\"" + ProtoPath + ";conf\";")
+
+		if err != nil {
+			return errors.Errorf("GenItselfProtoStr builder.WriteString Proto Head Err:%v", err)
 		}
 
 		//写入proto文件
-		errGenProto := GenProtoTomessage(path, sheetName, memberMap, &itselfProtoStr, protoIdGen)
+		errGenProto := GenProtoTomessage(path, sheetName, memberMap, &builder, protoIdGen)
 
 		if errGenProto != nil {
 			return errors.Errorf("GenProtoTomessage 生成各自 proto失败 %v", errGenProto)
 		}
 
-		errWrite := os.WriteFile(ProtoPath+messageName+".proto", []byte(itselfProtoStr.String()), 0777)
+		errWrite := os.WriteFile(ProtoPath+messageName+".proto", []byte(builder.String()), 0777)
 
 		if errWrite != nil {
 			return errors.Errorf("写入各自proto文件失败 %v", errWrite)
+		}
+
+		if csPath != "" {
+			errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+messageName+".proto")
+
+			if errRun != nil {
+				return errors.Errorf("本次版本生成cs文件失败 %v", errRun)
+			}
+		}
+
+		protoVersionData[filenameOnly] = ProtoVersion{
+			ExcelMd5:  md5.String(data),
+			ProtoName: messageName + ".proto",
 		}
 	}
 
@@ -255,10 +355,6 @@ func genProtoByTable(path string, ProtoPath string, protoIdGen *ProtoIDGen.Proto
 }
 
 func GenItselfProtoStr(protoPath string, messageName string, builder *strings.Builder) error {
-
-	if strings.HasSuffix(protoPath, "confpb.proto") == true {
-		protoPath = protoPath[:len(protoPath)-12]
-	}
 
 	itselfProto := protoPath + messageName + ".proto"
 

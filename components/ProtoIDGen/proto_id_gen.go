@@ -15,6 +15,7 @@ func LoadGen(idGenPath string) (*ProtoIdGen, error) {
 	if errRead != nil && os.IsNotExist(errRead) {
 		//不存在直接创建
 		fmt.Println("对应路径下不存在ProtoID记录，直接创建", idGenPath)
+
 		fp, errCreate := os.Create(idGenPath) // 如果文件已存在，会将文件清空。
 		if errCreate != nil {
 			return nil, errors.Errorf("创建在ProtoID记录失败，Err: %v", errCreate)
