@@ -1,6 +1,7 @@
 package SqliteDBGen
 
 import (
+	"Tool-Library/components/ProtoIDGen"
 	"Tool-Library/components/VersionTxtGen"
 	"Tool-Library/components/filemode"
 	"Tool-Library/components/md5"
@@ -26,7 +27,7 @@ var starReadLine = 5
 
 var isMarshal = true
 
-func GenerateSqliteDB(confPath string, confProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
+func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
 
 	errorMkdir := filemode.MkdirAll(dbGenPathStr, 777)
 	if errorMkdir != nil {
@@ -34,15 +35,6 @@ func GenerateSqliteDB(confPath string, confProtoPath string, dbGenPathStr string
 	}
 
 	fmt.Println("\n--------开始生成数据库--------")
-
-	Parser := protoparse.Parser{}
-	//加载并解析 proto文件,得到一组 FileDescriptor
-	desCs, err := Parser.ParseFiles(confProtoPath)
-	if err != nil {
-		return errors.Errorf("GenerateSqliteDB error 生成失败解析proto, %v", err)
-	}
-
-	fileDescriptor := desCs[0]
 
 	if strings.HasSuffix(confPath, "/") {
 		confPath = confPath[:len(confPath)-1]
@@ -95,7 +87,7 @@ func GenerateSqliteDB(confPath string, confProtoPath string, dbGenPathStr string
 					return
 				}
 
-				errGen := GenerateTableDB(path, data, fileDescriptor, dbGenPathStr, allDbVersion)
+				errGen := GenerateTableDB(path, data, ProtoPath, dbGenPathStr, allDbVersion)
 
 				if errGen != nil {
 					loadErrorRef.Store(errors.Errorf("生成数据库失败:%v", errGen))
@@ -120,12 +112,19 @@ func GenerateSqliteDB(confPath string, confProtoPath string, dbGenPathStr string
 	return nil
 }
 
-func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescriptor, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
+func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
 
 	file, errOpenBinary := xlsx.OpenBinary(data)
 	if errOpenBinary != nil {
 		return errors.Wrapf(errOpenBinary, "解析表格数据失败 OpenBinary 表名：%s", path)
 	}
+
+	//获取文件名带后缀
+	filenameWithSuffix := filepath.Base(path)
+	//获取文件后缀
+	fileSuffix := filepath.Ext(path)
+	//获取文件名
+	filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix)
 
 	// 找到需要处理sheet（读取sheet(list)）
 	ListSheet := file.Sheet["list"]
@@ -148,15 +147,13 @@ func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescript
 			return errors.Errorf("找不到sheet sheetName  %s in %s", sheetName, path)
 		}
 
-		filenameOnly, msgDesc, errMsgGet := getMsgDesc(path, sheetName, fileDescriptor)
-
 		dbName := GetDBTableName(filenameOnly, sheetName, md5.String(data), strconv.Itoa(len(data)))
 
 		_, errIsExist := os.Stat(dbGenPathStr + dbName)
 
 		if !os.IsNotExist(errIsExist) {
 			*allDbVersion = append(*allDbVersion, VersionTxtGen.MsgToDB{
-				MsgName:   GetMessageName(filenameOnly, sheetName),
+				MsgName:   ProtoIDGen.GetMessageName(filenameOnly, sheetName),
 				FileName:  dbName,
 				TableName: filenameOnly,
 				SheetName: sheetName,
@@ -165,8 +162,27 @@ func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescript
 			return nil
 		}
 
-		if errMsgGet != nil {
-			return errors.Errorf("获取表名字和消息结果：%v", errMsgGet)
+		messageName := ProtoIDGen.GetMessageName(filenameOnly, sheetName)
+
+		Parser := protoparse.Parser{}
+		//加载并解析 proto文件,得到一组 FileDescriptor
+		desCs, err := Parser.ParseFiles(ProtoPath + messageName + ".proto")
+		if err != nil {
+			return errors.Errorf("GenerateSqliteDB error 生成失败解析proto：%v, %v", ProtoPath+messageName+".proto", err)
+		}
+
+		fileDescriptor := desCs[0]
+
+		var msgDesc *desc.MessageDescriptor
+
+		for _, v := range fileDescriptor.GetMessageTypes() {
+			if messageName == v.GetName() {
+				msgDesc = v
+			}
+		}
+
+		if msgDesc == nil {
+			return errors.Errorf("Proto数据中没有找到messageName 消息名称名称：%v", messageName)
 		}
 
 		driverConns := []*sqlite3.SQLiteConn{}
@@ -512,90 +528,4 @@ func GetDBTableName(filenameOnly string, sheetName string, param1 string, param2
 
 func GetMessageName(filenameOnly string, sheetName string) string {
 	return "confpb" + filenameOnly + sheetName
-}
-
-func getMsgDesc(path string, sheetName string, fileDescriptor *desc.FileDescriptor) (string, *desc.MessageDescriptor, error) {
-	//获取文件名带后缀
-	filenameWithSuffix := filepath.Base(path)
-	//获取文件后缀
-	fileSuffix := filepath.Ext(path)
-	//获取文件名
-	filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix)
-
-	messageName := GetMessageName(filenameOnly, sheetName)
-
-	var msgDesc *desc.MessageDescriptor
-
-	for _, v := range fileDescriptor.GetMessageTypes() {
-		if messageName == v.GetName() {
-			msgDesc = v
-		}
-	}
-
-	if msgDesc == nil {
-		return "", nil, errors.Errorf("表格数据中没有找到messageName 消息名称名称：%v", messageName)
-	}
-
-	return filenameOnly, msgDesc, nil
-}
-
-func SqliteTest(confPath string, genDBPath string, confProtoPath string, dbName string) error {
-
-	fmt.Println("开启测试:", dbName)
-
-	Parser := protoparse.Parser{}
-	//加载并解析 proto文件,得到一组 FileDescriptor
-	desCs, err := Parser.ParseFiles(confProtoPath)
-	if err != nil {
-		return errors.Errorf("GenerateSqliteDB error 生成失败解析proto, %v", err)
-	}
-
-	fileDescriptor := desCs[0]
-
-	xlsx_sheet := strings.Split(dbName, ".")[0]
-
-	tableName := strings.Split(xlsx_sheet, "_")[0]
-
-	sheetName := strings.Split(xlsx_sheet, "_")[1]
-
-	_, msgDesc, errMsgGet := getMsgDesc(tableName+".xlsx", sheetName, fileDescriptor)
-
-	if errMsgGet != nil {
-		return errors.Errorf("test getMsgDesc Err:", errMsgGet)
-	}
-
-	testDb, err := sql.Open("sqlite3", genDBPath+dbName)
-
-	if err != nil {
-		return errors.Errorf("打开数据库失败，err:%v", err)
-	}
-
-	errPing := testDb.Ping()
-	if errPing != nil {
-		return errors.Errorf("连接数据库失败，err:%v", errPing)
-	}
-
-	rows, err := testDb.Query("SELECT id,data FROM data")
-
-	if err != nil {
-		return errors.Errorf("查询数据库失败，err:%v", err)
-	}
-
-	curMessage := dynamic.NewMessage(msgDesc)
-
-	for rows.Next() {
-		var id string
-		var data []byte
-		rows.Scan(&id, &data)
-
-		errUnmarshal := curMessage.Unmarshal(data)
-
-		if errUnmarshal != nil {
-			return errors.Errorf("Unmarshal err %v", errUnmarshal)
-		}
-
-		fmt.Println("id:", id, "data:", curMessage.String())
-	}
-
-	return nil
 }

@@ -9,8 +9,11 @@ import (
 	"github.com/tealeg/xlsx"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -73,25 +76,6 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 		return errors.Errorf("创建proto目录失败 Err:%v", errorCreateProto)
 	}
 
-	confProtoPath := ProtoPath + "confpa.proto"
-
-	fileProto, errNewProto := os.OpenFile(confProtoPath, os.O_CREATE, 0777)
-	defer fileProto.Close()
-
-	if errNewProto != nil {
-		return errors.Errorf("创建proto文件失败 %v", errNewProto)
-	}
-
-	protoStr := strings.Builder{}
-
-	//消息头部
-
-	_, errProtoStr := protoStr.WriteString("syntax = \"proto3\";\n\npackage conf;\n\noption go_package=\"" + confProtoPath + ";conf\";")
-
-	if errProtoStr != nil {
-		return errors.Errorf("protoStr.WriteString 写入proto文件失败 %v", errProtoStr)
-	}
-
 	if strings.HasSuffix(confPath, "/") {
 		confPath = confPath[:len(confPath)-1]
 	}
@@ -118,27 +102,48 @@ func readDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 
 		fmt.Println("表格数量：", len(fMap))
 
-		for path := range fMap {
+		wg := &sync.WaitGroup{}
+		var loadErrorRef atomic.Value
 
-			errGen := genProtoByTable(path, ProtoPath, &protoStr, protoIdGen)
+		loadMux := &sync.Mutex{}
+		timeGen := time.Now()
+		for k := range fMap {
 
-			if errGen != nil {
-				return errors.Errorf("genProtoByTable 表格：%v 生成Proto失败 Error：%v", path, errGen)
-			}
+			path := k
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				defer func() {
+					if errRecover := recover(); errRecover != nil {
+						fmt.Println("GenerateProto error 生成失败,Err:", errRecover)
+						debug.PrintStack()
+					}
+				}()
+
+				errGen := genProtoByTable(path, ProtoPath, protoIdGen)
+
+				if errGen != nil {
+					loadErrorRef.Store(errors.Errorf("genProtoByTable 表格：%v 生成Proto失败 Error：%v", path, errGen))
+					return
+				}
+
+				loadMux.Lock()
+				defer loadMux.Unlock()
+			}()
 		}
-	}
 
-	//写入总的proto文件
-	err := os.WriteFile(confProtoPath, []byte(protoStr.String()), 0777)
+		wg.Wait()
+		fmt.Println("多线程生成Proto耗时：", time.Since(timeGen))
 
-	if err != nil {
-		return errors.Errorf("写入protoA文件失败 %v", err)
+		if loadError := loadErrorRef.Load(); loadError != nil {
+			return errors.Errorf("多线程生成Proto,error, %v", loadError)
+		}
 	}
 
 	return nil
 }
 
-func genProtoByTable(path string, ProtoPath string, allProtoBuilder *strings.Builder, protoIdGen *ProtoIDGen.ProtoIdGen) error {
+func genProtoByTable(path string, ProtoPath string, protoIdGen *ProtoIDGen.ProtoIdGen) error {
 
 	data, errFileTable := os.ReadFile(path)
 
@@ -147,6 +152,7 @@ func genProtoByTable(path string, ProtoPath string, allProtoBuilder *strings.Bui
 	}
 
 	file, errOpenBinary := xlsx.OpenBinary(data)
+
 	if errOpenBinary != nil {
 		return errors.Wrapf(errOpenBinary, "解析表格数据失败 OpenBinary 表名：%s", path)
 	}
@@ -242,12 +248,6 @@ func genProtoByTable(path string, ProtoPath string, allProtoBuilder *strings.Bui
 
 		if errWrite != nil {
 			return errors.Errorf("写入各自proto文件失败 %v", errWrite)
-		}
-
-		errGenProto = GenProtoTomessage(path, sheetName, memberMap, allProtoBuilder, protoIdGen)
-
-		if errGenProto != nil {
-			return errors.Errorf("GenProtoTomessage 生成总体 proto失败 %v", errGenProto)
 		}
 	}
 

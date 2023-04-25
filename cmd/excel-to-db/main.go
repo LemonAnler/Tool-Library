@@ -96,7 +96,7 @@ func main() {
 
 	timeDB := time.Now()
 	//生成数据库
-	errDB := SqliteDBGen.GenerateSqliteDB(confPath, ProtoPath+"confpa.proto", genDBPath, &allDbVersion)
+	errDB := SqliteDBGen.GenerateSqliteDB(confPath, ProtoPath, genDBPath, &allDbVersion)
 	costTimeDB := time.Since(timeDB)
 
 	if errDB != nil {
@@ -119,8 +119,6 @@ func main() {
 	fmt.Println("生成版本号文件耗时：", costTimeVersion)
 
 	fmt.Println("总体时间：", time.Since(startTime))
-
-	//SqliteDBGen.SqliteTest(confPath, genDBPath, ProtoPath+"confpa.proto", renameDBList[5])
 }
 
 func GenerateProtoToCs(csPath string, ProtoPath string) error {
@@ -142,10 +140,6 @@ func GenerateProtoToCs(csPath string, ProtoPath string) error {
 	loadMux := &sync.Mutex{}
 
 	for _, f := range fs {
-
-		if f.Name() == "confpa.proto" || f.IsDir() {
-			continue
-		}
 
 		path := ProtoPath + f.Name()
 
