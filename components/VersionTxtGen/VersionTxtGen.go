@@ -32,11 +32,9 @@ func GenerateVersionFile(dbPath string, allDbVersion []MsgToDB) error {
 	}
 
 	newVersion, errNew := os.Create(dbPath + "version.txt")
-
 	if errNew != nil {
 		return errors.Errorf("创建版本文件失败 %v", errNew)
 	}
-
 	defer newVersion.Close()
 
 	fmt.Println("写入版本文件：条目数量：", len(allDbVersion))

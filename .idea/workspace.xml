@@ -6,6 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="4d606aee-feb0-46f0-9d8d-da35ceccdf2a" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/conf-http/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/conf-http/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/excel-to-db/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/excel-to-db/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/SqliteDBGen/SqliteDBGen.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/SqliteDBGen/SqliteDBGen.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/VersionTxtGen/VersionTxtGen.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/VersionTxtGen/VersionTxtGen.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,9 +148,9 @@
     <recent_temporary>
       <list>
         <item itemvalue="Go 构建.go build Tool-Library/cmd/conf-http" />
+        <item itemvalue="Go 构建.go build Tool-Library/cmd/excel-to-db" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/get-cs" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/build" />
-        <item itemvalue="Go 构建.go build Tool-Library/cmd/excel-to-db" />
         <item itemvalue="Go 构建.go build Tool-Library/Cmd/excel-to-db" />
       </list>
     </recent_temporary>

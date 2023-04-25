@@ -2,15 +2,16 @@ package excel_to_proto
 
 import (
 	"Tool-Library/components/ProtoIDGen"
+	conf_tool "Tool-Library/components/conf-tool"
 	"Tool-Library/components/filemode"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/tealeg/xlsx"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var starReadLine = 5
@@ -20,12 +21,8 @@ func GenerateExcelToProto(isUpdateConf bool, confPath string, idGenPath string, 
 
 	fmt.Println("     git 自动更新关闭    ")
 	if isUpdateConf {
-		cmd := exec.Command("cd", "conf", "&&", "git", "reset", "--hard origin/master")
+		e := conf_tool.RunCommand("cd", "conf", "&&", "git", "reset", "--hard", "origin/master")
 
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		e := cmd.Run()
 		if e != nil {
 			return errors.Errorf("更新配置失败 Err:%v ", e)
 		}
@@ -33,7 +30,9 @@ func GenerateExcelToProto(isUpdateConf bool, confPath string, idGenPath string, 
 
 	fmt.Println("--------开始加载ProtoID记录--------")
 	//加载旧ProtoID表进来
+	timeLoad := time.Now()
 	protoIdGen, errLoadGen := ProtoIDGen.LoadGen(idGenPath)
+	fmt.Println("加载ProtoID记录耗时：", time.Since(timeLoad))
 
 	if errLoadGen != nil {
 		return errors.Errorf("加载ProtoID记录失败，idGenNamePath：%v  Err:%v ", idGenPath, errLoadGen)
@@ -44,7 +43,9 @@ func GenerateExcelToProto(isUpdateConf bool, confPath string, idGenPath string, 
 	fmt.Println("--------开始生成Proto--------")
 
 	//加载表去生成对应proto
+	timeGenerate := time.Now()
 	errGenerate := readDirToGenerateProto(protoIdGen, confPath, ProtoPath)
+	fmt.Println("生成Proto耗时：", time.Since(timeGenerate))
 
 	if errGenerate != nil {
 		return errors.Errorf("生成proto失败 Err:%v ", errGenerate)

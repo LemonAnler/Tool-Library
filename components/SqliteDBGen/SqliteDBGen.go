@@ -3,9 +3,8 @@ package SqliteDBGen
 import (
 	"Tool-Library/components/VersionTxtGen"
 	"Tool-Library/components/filemode"
-	"crypto/md5"
+	"Tool-Library/components/md5"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
@@ -122,6 +121,7 @@ func GenerateSqliteDB(confPath string, confProtoPath string, dbGenPathStr string
 }
 
 func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescriptor, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
+
 	file, errOpenBinary := xlsx.OpenBinary(data)
 	if errOpenBinary != nil {
 		return errors.Wrapf(errOpenBinary, "解析表格数据失败 OpenBinary 表名：%s", path)
@@ -149,6 +149,21 @@ func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescript
 		}
 
 		filenameOnly, msgDesc, errMsgGet := getMsgDesc(path, sheetName, fileDescriptor)
+
+		dbName := GetDBTableName(filenameOnly, sheetName, md5.String(data), strconv.Itoa(len(data)))
+
+		_, errIsExist := os.Stat(dbGenPathStr + dbName)
+
+		if !os.IsNotExist(errIsExist) {
+			*allDbVersion = append(*allDbVersion, VersionTxtGen.MsgToDB{
+				MsgName:   GetMessageName(filenameOnly, sheetName),
+				FileName:  dbName,
+				TableName: filenameOnly,
+				SheetName: sheetName,
+			})
+
+			return nil
+		}
 
 		if errMsgGet != nil {
 			return errors.Errorf("获取表名字和消息结果：%v", errMsgGet)
@@ -316,8 +331,6 @@ func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescript
 			}
 		}
 
-		dbName := GetDBTableName(filenameOnly, sheetName)
-
 		destDb, errCreateDest := sql.Open(curBackupDriverName, dbGenPathStr+dbName)
 
 		if errCreateDest != nil {
@@ -336,7 +349,7 @@ func GenerateTableDB(path string, data []byte, fileDescriptor *desc.FileDescript
 		//获取所有消息名字
 		*allDbVersion = append(*allDbVersion, VersionTxtGen.MsgToDB{
 			MsgName:   GetMessageName(filenameOnly, sheetName),
-			FileName:  ReDBName(dbGenPathStr + dbName),
+			FileName:  dbName,
 			TableName: filenameOnly,
 			SheetName: sheetName,
 		})
@@ -492,8 +505,9 @@ func saveToDB(driverConns []*sqlite3.SQLiteConn, destDb *sql.DB, srcDB *sql.DB, 
 	return nil
 }
 
-func GetDBTableName(filenameOnly string, sheetName string) string {
-	return filenameOnly + "_" + sheetName + ".db"
+func GetDBTableName(filenameOnly string, sheetName string, param1 string, param2 string) string {
+
+	return filenameOnly + "_" + sheetName + "_" + param1 + param2 + ".db"
 }
 
 func GetMessageName(filenameOnly string, sheetName string) string {
@@ -584,37 +598,4 @@ func SqliteTest(confPath string, genDBPath string, confProtoPath string, dbName 
 	}
 
 	return nil
-}
-
-func ReDBName(dBPath string) string {
-
-	//获取文件名带后缀
-	filenameWithSuffix := filepath.Base(dBPath)
-	//获取文件后缀
-	fileSuffix := filepath.Ext(dBPath)
-	//获取文件名
-	filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix)
-
-	path := strings.TrimSuffix(dBPath, filenameWithSuffix)
-
-	bytes, errRead := os.ReadFile(dBPath)
-	if errRead != nil {
-		fmt.Printf("读取文件失败 表名:%v", filenameOnly)
-		return ""
-	}
-
-	h := md5.New()
-
-	h.Write(bytes)
-
-	cipherStr := h.Sum(nil)
-
-	newName := filenameOnly + "_" + hex.EncodeToString(cipherStr) + "_" + strconv.Itoa(len(bytes)) + fileSuffix
-
-	errRename := os.Rename(dBPath, path+newName)
-	if errRename != nil {
-		return ""
-	}
-
-	return newName
 }

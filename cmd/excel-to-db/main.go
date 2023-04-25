@@ -58,12 +58,15 @@ func main() {
 		return
 	}
 
+	timeGenProto := time.Now()
 	//转表生成proto
 	if errExcelToProto := excel_to_proto.GenerateExcelToProto(updateConf, confPath, idGenPath, ProtoPath); errExcelToProto != nil {
 		fmt.Println("转表生成proto失败 ExcelToProtoGen.GenerateExcelToProto Err: ", errExcelToProto)
 		return
 	}
+	costTimeGenProto := time.Since(timeGenProto)
 
+	timeCs := time.Now()
 	//生成前端cs
 	if isOpenGenCs {
 		if errProtoToCs := GenerateProtoToCs(csPath, ProtoPath); errProtoToCs != nil {
@@ -71,9 +74,12 @@ func main() {
 			return
 		}
 	}
+	costTimeCs := time.Since(timeCs)
 
 	if onlyCs {
 		fmt.Println("只生成cs，结束")
+		fmt.Println("生成proto耗时：", costTimeGenProto)
+		fmt.Println("生成cs耗时：", costTimeCs)
 		return
 	}
 
@@ -88,8 +94,10 @@ func main() {
 
 	allDbVersion := []VersionTxtGen.MsgToDB{}
 
+	timeDB := time.Now()
 	//生成数据库
 	errDB := SqliteDBGen.GenerateSqliteDB(confPath, ProtoPath+"confpa.proto", genDBPath, &allDbVersion)
+	costTimeDB := time.Since(timeDB)
 
 	if errDB != nil {
 		fmt.Println("生成数据库失败：Err", errDB)
@@ -97,12 +105,18 @@ func main() {
 	}
 
 	//生成版本号文件
+	timeVersion := time.Now()
 	errVersion := VersionTxtGen.GenerateVersionFile(genDBPath, allDbVersion)
-
+	costTimeVersion := time.Since(timeVersion)
 	if errVersion != nil {
 		fmt.Println("生成版本号文件失败：Err", errVersion)
 		return
 	}
+
+	fmt.Println("生成proto耗时：", costTimeGenProto)
+	fmt.Println("生成cs耗时：", costTimeCs)
+	fmt.Println("生成数据库耗时：", costTimeDB)
+	fmt.Println("生成版本号文件耗时：", costTimeVersion)
 
 	fmt.Println("总体时间：", time.Since(startTime))
 
@@ -135,8 +149,6 @@ func GenerateProtoToCs(csPath string, ProtoPath string) error {
 
 		path := ProtoPath + f.Name()
 
-		fmt.Println("生成CS文件:", f.Name())
-
 		wg.Add(1)
 
 		go func() {
@@ -149,8 +161,6 @@ func GenerateProtoToCs(csPath string, ProtoPath string) error {
 			}()
 
 			errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, path)
-
-			fmt.Println(path)
 
 			if errRun != nil {
 				loadErrorRef.Store(errors.Errorf("生成CS失败:%v", errRun))

@@ -147,8 +147,6 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 		return errors.Errorf("os.MkdirTemp fail, err: %v", err)
 	}
 
-	fmt.Println("tempDir:", tempDir)
-
 	defer os.RemoveAll(tempDir)
 
 	err = filemode.MkdirAll(dbPath, 777)
