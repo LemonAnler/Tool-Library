@@ -2,6 +2,7 @@ package main
 
 import (
 	"Tool-Library/components/ProtoIDGen"
+	conf_tool "Tool-Library/components/conf-tool"
 	excel_to_proto "Tool-Library/components/excel-to-proto"
 	"Tool-Library/components/filemode"
 	"encoding/json"
@@ -93,15 +94,10 @@ func main() {
 		return
 	}
 
-	fileProtoVersion, errNewProtoVersion := os.OpenFile(protoVersionPath, os.O_CREATE|os.O_TRUNC, 0777)
-	defer fileProtoVersion.Close()
-
-	if errNewProtoVersion != nil {
-		fmt.Printf("写入版本文件失败path:%v  os.OpenFile: %v", protoVersionPath, errNewProtoVersion)
+	if errWrite := conf_tool.WriteFile(protoVersionPath, jsonBytes); errWrite != nil {
+		fmt.Printf("写入protoVersionData报错 conf_tool.WriteFile: %v", errWrite)
 		return
 	}
-
-	fileProtoVersion.Write(jsonBytes)
 
 	fmt.Println("程序耗时：", time.Since(timeCost))
 }

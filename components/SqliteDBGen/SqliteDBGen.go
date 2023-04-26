@@ -3,9 +3,11 @@ package SqliteDBGen
 import (
 	"Tool-Library/components/ProtoIDGen"
 	"Tool-Library/components/VersionTxtGen"
+	conf_tool "Tool-Library/components/conf-tool"
 	"Tool-Library/components/filemode"
 	"Tool-Library/components/md5"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
@@ -27,16 +29,40 @@ var starReadLine = 5
 
 var isMarshal = true
 
-type DBVersion struct {
-	dbMap map[string]struct{}
-}
+var DBVersionName = "DBVersion.json"
 
 func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
-
 	errorMkdir := filemode.MkdirAll(dbGenPathStr, 777)
 	if errorMkdir != nil {
 		return errors.Errorf("创建genDBPath目录 Err:%v", dbGenPathStr)
 	}
+
+	fmt.Println("--------开始加载DBMd5Json--------")
+
+	DBVersionPath := dbGenPathStr + DBVersionName
+
+	DBVersionJson, errDBVersion := os.ReadFile(DBVersionPath)
+	if errDBVersion != nil && os.IsNotExist(errDBVersion) {
+		//不存在直接创建
+		fmt.Println("对应路径下不存在DBVersion，直接创建,路径：", DBVersionPath)
+		fp, errCreate := os.Create(DBVersionPath) // 如果文件已存在，会将文件清空。
+		if errCreate != nil {
+			return errors.Errorf("创建在对应路径下不存在ProtoVersion失败，Err: %v", errCreate)
+		}
+
+		DBVersionJson, errDBVersion = os.ReadFile(DBVersionPath)
+		if errDBVersion != nil {
+			return errors.Errorf("创建在ProtoID记录后，重新读取失败: %v", errDBVersion)
+		}
+		// defer延迟调用
+		defer fp.Close() //关闭文件，释放资源。
+	}
+
+	DBVersionData := map[string]map[string]VersionTxtGen.MsgToDB{}
+
+	json.Unmarshal(DBVersionJson, &DBVersionData)
+
+	fmt.Println("--------加载DBMd5Json结束--------")
 
 	fmt.Println("\n--------开始生成数据库--------")
 
@@ -48,7 +74,11 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, al
 	if fss, errReadDir := os.ReadDir(dirWithSep); errReadDir != nil {
 		return errors.Errorf("GenerateProto error 生成失败读取文件, %v", errReadDir)
 	} else {
-		fmap := make(map[string]struct{})
+		wg := &sync.WaitGroup{}
+		var loadErrorRef atomic.Value
+
+		loadMux := &sync.Mutex{}
+
 		for _, f := range fss {
 			fName := f.Name()
 
@@ -61,19 +91,6 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, al
 				continue
 			}
 
-			fmap[path] = struct{}{}
-		}
-
-		fmt.Print("\n表格数量：", len(fmap), "\n")
-
-		wg := &sync.WaitGroup{}
-		var loadErrorRef atomic.Value
-
-		loadMux := &sync.Mutex{}
-
-		for k := range fmap {
-
-			path := k
 			wg.Add(1)
 
 			go func() {
@@ -85,21 +102,36 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, al
 					}
 				}()
 
+				loadMux.Lock()
+				defer loadMux.Unlock()
+
 				data, errRead := os.ReadFile(path)
 				if errRead != nil {
 					loadErrorRef.Store(errors.Errorf("GenerateProto error 读取文件失败,path:%v %v", path, errRead))
 					return
 				}
 
-				errGen := GenerateTableDB(path, data, ProtoPath, dbGenPathStr, allDbVersion)
+				excelMd5 := fName + "_" + md5.String(data)
 
-				if errGen != nil {
-					loadErrorRef.Store(errors.Errorf("生成数据库失败:%v", errGen))
-					return
+				if _, ok := DBVersionData[excelMd5]; ok {
+					//存在已经生成的版本跳过
+					excelMd5Proto := DBVersionData[excelMd5]
+
+					for _, db := range excelMd5Proto {
+						*allDbVersion = append(*allDbVersion, db)
+					}
+				} else {
+					fmt.Println("生成对应表的DB,表名:", fName)
+
+					DBVersionData[excelMd5] = map[string]VersionTxtGen.MsgToDB{}
+
+					errGen := GenerateTableDB(path, data, ProtoPath, dbGenPathStr, allDbVersion, DBVersionData[excelMd5])
+
+					if errGen != nil {
+						loadErrorRef.Store(errors.Errorf("生成数据库失败:%v", errGen))
+						return
+					}
 				}
-
-				loadMux.Lock()
-				defer loadMux.Unlock()
 			}()
 		}
 
@@ -109,6 +141,15 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, al
 			return errors.Errorf("多线程生成DB,error, %v", loadError)
 		}
 
+		jsonBytes, errJson := json.Marshal(DBVersionData)
+
+		if errJson != nil {
+			return errors.Errorf("生成DBVersion JSON失败, %v", errJson)
+		}
+
+		if errWrite := conf_tool.WriteFile(DBVersionPath, jsonBytes); errWrite != nil {
+			return errors.Errorf("DBVersion 写入JSON失败, %v", errWrite)
+		}
 	}
 
 	fmt.Println("\n--------生成数据库结束--------")
@@ -116,7 +157,7 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, al
 	return nil
 }
 
-func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
+func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB, versionDBMap map[string]VersionTxtGen.MsgToDB) error {
 
 	file, errOpenBinary := xlsx.OpenBinary(data)
 	if errOpenBinary != nil {
@@ -367,12 +408,16 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 		}
 
 		//获取所有消息名字
-		*allDbVersion = append(*allDbVersion, VersionTxtGen.MsgToDB{
+		newDBInfo := VersionTxtGen.MsgToDB{
 			MsgName:   GetMessageName(filenameOnly, sheetName),
 			FileName:  dbName,
 			TableName: filenameOnly,
 			SheetName: sheetName,
-		})
+		}
+
+		*allDbVersion = append(*allDbVersion, newDBInfo)
+
+		versionDBMap[dbName] = newDBInfo
 	}
 
 	return nil
