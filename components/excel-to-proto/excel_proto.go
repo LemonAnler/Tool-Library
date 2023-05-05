@@ -25,7 +25,7 @@ var ProtoVersionName = "ProtoVersion.json"
 
 type ProtoVersion struct {
 	ExcelMd5  string
-	ProtoName string
+	ProtoName []string
 }
 
 func GenerateExcelToProto(confPath string, idGenPath string, ProtoPath string) error {
@@ -213,10 +213,13 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 			//虽然不需要读取数据了，但是 cs还是需要生成
 
 			if csPath != "" {
-				errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+v.ProtoName)
 
-				if errRun != nil {
-					return errors.Errorf("本次版本生成cs文件失败 %v", errRun)
+				for _, protoName := range v.ProtoName {
+					errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+protoName)
+
+					if errRun != nil {
+						return errors.Errorf("本次版本生成cs文件失败 %v", errRun)
+					}
 				}
 			}
 		}
@@ -345,9 +348,13 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 			}
 		}
 
+		protoNameList := protoVersionData[filenameOnly].ProtoName
+
+		protoNameList = append(protoNameList, messageName+".proto")
+
 		protoVersionData[filenameOnly] = ProtoVersion{
 			ExcelMd5:  md5.String(data),
-			ProtoName: messageName + ".proto",
+			ProtoName: protoNameList,
 		}
 	}
 
