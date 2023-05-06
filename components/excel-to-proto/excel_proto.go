@@ -278,7 +278,7 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 				continue
 			}
 
-			titleType := strings.ToLower(curSheet.Rows[2].Cells[j].String())
+			titleType := strings.TrimSpace(strings.ToLower(curSheet.Rows[2].Cells[j].String()))
 
 			if titleType == "" {
 				fmt.Printf("表格列类型为空跳过 表名：%v 页签名称：%v 列数：%d \n", path, sheetName, j)
