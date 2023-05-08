@@ -305,35 +305,55 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 
 						if fieldDesc.GetType().String() == "TYPE_INT32" {
 
-							value, err := strconv.Atoi(cellStr)
-
-							if err != nil {
-								return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
-							}
-
 							if fieldDesc.IsRepeated() {
-								msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(value))
+
+								valueVec := strings.Split(cellStr, ",")
+
+								for _, value := range valueVec {
+
+									value = strings.TrimSpace(value)
+
+									if value == "" {
+										continue
+									}
+
+									valueInt, err := strconv.Atoi(value)
+
+									if err != nil {
+										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+									}
+
+									msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(valueInt))
+								}
 							} else {
+
+								value, err := strconv.Atoi(cellStr)
+
+								if err != nil {
+									return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+								}
+
 								msg.SetFieldByName(fieldDesc.GetName(), int32(value))
 							}
 
 							if strings.ToLower(title) == "id" {
-								keyStr = strconv.Itoa(value)
+								keyStr = cellStr
 							}
 						}
 
 						if fieldDesc.GetType().String() == "TYPE_STRING" {
 
-							value := cellStr
-
 							if fieldDesc.IsRepeated() {
-								msg.AddRepeatedFieldByName(fieldDesc.GetName(), value)
+								valueVec := strings.Split(cellStr, ",")
+								for _, value := range valueVec {
+									msg.AddRepeatedFieldByName(fieldDesc.GetName(), value)
+								}
 							} else {
-								msg.SetFieldByName(fieldDesc.GetName(), value)
+								msg.SetFieldByName(fieldDesc.GetName(), cellStr)
 							}
 
 							if strings.ToLower(title) == "key" || strings.ToLower(title) == "id" {
-								keyStr = value
+								keyStr = cellStr
 							}
 						}
 
@@ -346,23 +366,43 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 							}
 
 							if fieldDesc.IsRepeated() {
-
+								//布尔不支持重复
 							} else {
 								msg.SetFieldByName(fieldDesc.GetName(), value)
 							}
 						}
 
 						if fieldDesc.GetType().String() == "TYPE_FLOAT" {
-
-							value, err := strconv.ParseFloat(cellStr, 32)
-
-							if err != nil {
-								return errors.Errorf("表格数据中FLOAT字段类型错误 %v", err)
-							}
-
 							if fieldDesc.IsRepeated() {
-								msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(value))
+								valueVec := strings.Split(cellStr, ",")
+								for _, value := range valueVec {
+									value = strings.TrimSpace(value)
+
+									if value == "" {
+										continue
+									}
+
+									valueFloat, err := strconv.ParseFloat(value, 32)
+
+									if err != nil {
+										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应FLOAT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+									}
+
+									msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(valueFloat))
+								}
 							} else {
+								cellStr = strings.TrimSpace(cellStr)
+
+								if cellStr == "" {
+									continue
+								}
+
+								value, err := strconv.ParseFloat(cellStr, 32)
+
+								if err != nil {
+									return errors.Errorf("表格数据中FLOAT字段类型错误 %v", err)
+								}
+
 								msg.SetFieldByName(fieldDesc.GetName(), float32(value))
 							}
 						}

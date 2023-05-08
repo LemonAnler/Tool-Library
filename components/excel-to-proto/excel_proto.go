@@ -450,7 +450,22 @@ func getProtoType(titleType string) string {
 	typeArray := strings.Split(titleType, "_")
 
 	if len(typeArray) == 2 && typeArray[1] == "list" {
-		protoType = "repeated " + protoType
+
+		repeatedType := "string"
+
+		if typeArray[0] == "bool" {
+			repeatedType = "bool"
+		}
+
+		if typeArray[0] == "float" {
+			repeatedType = "float"
+		}
+
+		if typeArray[0] == "int" {
+			repeatedType = "int32"
+		}
+
+		protoType = "repeated " + repeatedType
 	}
 
 	return protoType

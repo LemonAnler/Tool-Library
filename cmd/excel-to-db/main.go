@@ -13,7 +13,7 @@ import (
 
 var genPath = "./gen/exceltodb/"
 
-var ProtoPath = genPath + "proto/"
+var ProtoPath = "./gen/proto/" //指定到同一个文件夹下面
 
 func main() {
 	confPath := "conf"

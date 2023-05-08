@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4d606aee-feb0-46f0-9d8d-da35ceccdf2a" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/cmd/build/build.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/build/build.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/SqliteDBGen/SqliteDBGen.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/SqliteDBGen/SqliteDBGen.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Activity.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/conf/Activity.xlsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,34 +40,34 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.vendoring.notification.had.been.shown&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/gopath/src/Tool-Library/cmd/cs-gen&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "RunOnceActivity.go.vendoring.notification.had.been.shown": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "main",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "D:/gopath/src/Tool-Library/conf",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm"
   }
-}</component>
+}]]></component>
   <component name="ReadonlyStatusHandler">
     <option name="SHOW_DIALOG" value="false" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\gopath\src\Tool-Library\conf" />
       <recent name="D:\gopath\src\Tool-Library\cmd\cs-gen" />
       <recent name="D:\gopath\src\github.com\Tool-Library\cmd\conf-http" />
       <recent name="D:\gopath\src\github.com\Tool-Library\cmd\get-cs" />
       <recent name="D:\gopath\src\github.com\Tool-Library\bin" />
-      <recent name="D:\gopath\src\github.com\Tool-Library\shared" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\gopath\src\Tool-Library\cmd" />

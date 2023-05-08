@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var ProtoPath = "./gen/proto/" //指定到同一个文件夹下面
+
 func main() {
 
 	genPath := "./gen/cs-gen/"
@@ -25,7 +27,6 @@ func main() {
 	flag.Parse()
 
 	idGenPath := genPath + "proto_id.yaml"
-	ProtoPath := genPath + "proto/"
 
 	timeCost := time.Now()
 
@@ -33,6 +34,13 @@ func main() {
 
 	if errCreateGen != nil {
 		fmt.Println("创建gen目录失败 Err:", errCreateGen)
+		return
+	}
+
+	errCreateProto := filemode.MkdirAll(ProtoPath, 777)
+
+	if errCreateProto != nil {
+		fmt.Println("创建gen目录失败 Err:", errCreateProto)
 		return
 	}
 
