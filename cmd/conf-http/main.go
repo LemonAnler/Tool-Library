@@ -263,8 +263,9 @@ func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
 	err = GenerateCs(confcsJson, data)
 
 	jsoniter.NewEncoder(w).Encode(&response{
-		Code: 200,
-		Data: confcsJson,
+		Code:    200,
+		Data:    confcsJson,
+		Message: fmt.Sprintf(":%v", err),
 	})
 
 	fmt.Println("------生成前端CS:clientCsHandleFunc结束------")
@@ -277,6 +278,12 @@ func GenerateCs(configJson *ConfigCsJson, packBytes []byte) error {
 	genMux := &sync.Mutex{}
 	genMux.Lock()
 	defer genMux.Unlock()
+
+	errCreate := filemode.MkdirAll("./gen/", 777)
+
+	if errCreate != nil {
+		return errors.Errorf("filemode.MkdirAll(./gen/) fail, err: %v", errCreate)
+	}
 
 	tempConfDir, err := os.MkdirTemp("gen/", "excel-")
 

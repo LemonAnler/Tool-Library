@@ -12,11 +12,9 @@ import (
 	"time"
 )
 
-var ProtoPath = "./gen/proto/" //指定到同一个文件夹下面
-
 func main() {
 
-	genPath := "./gen/cs-gen/"
+	genPath := "./gen/"
 
 	confPath := "conf"
 	flag.StringVar(&confPath, "conf", confPath, "指定配置表格路径")
@@ -26,7 +24,9 @@ func main() {
 
 	flag.Parse()
 
-	idGenPath := genPath + "proto_id.yaml"
+	ProtoPath := genPath + "proto/"
+
+	idGenPath := ProtoPath + "proto_id.yaml"
 
 	timeCost := time.Now()
 

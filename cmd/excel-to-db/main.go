@@ -37,7 +37,7 @@ func main() {
 
 	timeGenProto := time.Now()
 	//转表生成proto
-	if errExcelToProto := excel_to_proto.GenerateExcelToProto(confPath, genPath+"proto_id.yaml", ProtoPath); errExcelToProto != nil {
+	if errExcelToProto := excel_to_proto.GenerateExcelToProto(confPath, ProtoPath+"proto_id.yaml", ProtoPath); errExcelToProto != nil {
 		fmt.Println("转表生成proto失败 ExcelToProtoGen.GenerateExcelToProto Err: ", errExcelToProto)
 		return
 	}

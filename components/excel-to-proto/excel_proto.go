@@ -47,10 +47,11 @@ func GenerateExcelToProto(confPath string, idGenPath string, ProtoPath string) e
 	protoVersionPath := ProtoPath + ProtoVersionName
 
 	protoVersionJson, errProtoVersion := os.ReadFile(protoVersionPath)
+
 	if errProtoVersion != nil && os.IsNotExist(errProtoVersion) {
 		//不存在直接创建
 		fmt.Println("对应路径下不存在ProtoVersion，直接创建,路径：", protoVersionPath)
-		fp, errCreate := os.Create(idGenPath) // 如果文件已存在，会将文件清空。
+		fp, errCreate := filemode.Create(idGenPath, 777) // 如果文件已存在，会将文件清空。
 		if errCreate != nil {
 			return errors.Errorf("创建在对应路径下不存在ProtoVersion失败，Err: %v", errCreate)
 		}
@@ -60,7 +61,15 @@ func GenerateExcelToProto(confPath string, idGenPath string, ProtoPath string) e
 			return errors.Errorf("创建在ProtoID记录后，重新读取失败: %v", errProtoVersion)
 		}
 		// defer延迟调用
-		defer fp.Close() //关闭文件，释放资源。
+		fp.Close() //关闭文件，释放资源。
+	}
+
+	err := os.Chmod(protoVersionPath, os.ModePerm)
+
+	fmt.Println("修改文件权限：", protoVersionPath)
+
+	if err != nil {
+		return errors.Errorf("修改文件权限失败，Err: %v", err)
 	}
 
 	protoVersionData := map[string]ProtoVersion{}
