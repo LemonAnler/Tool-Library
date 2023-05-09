@@ -254,6 +254,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 
 		titleRow := curSheet.Rows[1]
 		defaultRow := curSheet.Rows[4]
+		typeRow := curSheet.Rows[2]
 
 		for j := starReadLine; j < len(curSheet.Rows); j++ {
 			msg := dynamic.NewMessage(msgDesc)
@@ -271,6 +272,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 				}
 
 				title := titleRow.Cells[k].String()
+				strType := typeRow.Cells[k].String()
 
 				if title == "" {
 					continue
@@ -307,23 +309,33 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 
 							if fieldDesc.IsRepeated() {
 
-								valueVec := strings.Split(cellStr, ",")
+								if len(strings.Split(strType, "_")) == 2 && strings.Split(strType, "_")[1] == "list" {
+									valueVec := strings.Split(cellStr, ",")
 
-								for _, value := range valueVec {
+									for _, value := range valueVec {
 
-									value = strings.TrimSpace(value)
+										value = strings.TrimSpace(value)
 
-									if value == "" {
-										continue
+										if value == "" {
+											continue
+										}
+
+										valueInt, err := strconv.Atoi(value)
+
+										if err != nil {
+											return errors.Errorf("表名：%v_%v title:%v type: %v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, title, strType, j+1, k+1, curCell.String(), err)
+										}
+
+										msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(valueInt))
 									}
-
-									valueInt, err := strconv.Atoi(value)
+								} else {
+									value, err := strconv.Atoi(cellStr)
 
 									if err != nil {
 										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
 									}
 
-									msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(valueInt))
+									msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(value))
 								}
 							} else {
 
@@ -344,9 +356,13 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 						if fieldDesc.GetType().String() == "TYPE_STRING" {
 
 							if fieldDesc.IsRepeated() {
-								valueVec := strings.Split(cellStr, ",")
-								for _, value := range valueVec {
-									msg.AddRepeatedFieldByName(fieldDesc.GetName(), value)
+								if len(strings.Split(strType, "_")) == 2 && strings.Split(strType, "_")[1] == "list" {
+									valueVec := strings.Split(cellStr, ",")
+									for _, value := range valueVec {
+										msg.AddRepeatedFieldByName(fieldDesc.GetName(), value)
+									}
+								} else {
+									msg.AddRepeatedFieldByName(fieldDesc.GetName(), cellStr)
 								}
 							} else {
 								msg.SetFieldByName(fieldDesc.GetName(), cellStr)
@@ -374,21 +390,32 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 
 						if fieldDesc.GetType().String() == "TYPE_FLOAT" {
 							if fieldDesc.IsRepeated() {
-								valueVec := strings.Split(cellStr, ",")
-								for _, value := range valueVec {
-									value = strings.TrimSpace(value)
 
-									if value == "" {
-										continue
+								if len(strings.Split(strType, "_")) == 2 && strings.Split(strType, "_")[1] == "list" {
+									valueVec := strings.Split(cellStr, ",")
+									for _, value := range valueVec {
+										value = strings.TrimSpace(value)
+
+										if value == "" {
+											continue
+										}
+
+										valueFloat, err := strconv.ParseFloat(value, 32)
+
+										if err != nil {
+											return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应FLOAT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+										}
+
+										msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(valueFloat))
 									}
-
-									valueFloat, err := strconv.ParseFloat(value, 32)
+								} else {
+									value, err := strconv.ParseFloat(cellStr, 32)
 
 									if err != nil {
 										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应FLOAT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
 									}
 
-									msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(valueFloat))
+									msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(value))
 								}
 							} else {
 								cellStr = strings.TrimSpace(cellStr)

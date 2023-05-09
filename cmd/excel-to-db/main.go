@@ -35,6 +35,12 @@ func main() {
 		return
 	}
 
+	errorMkdir = filemode.MkdirAll(ProtoPath, os.ModePerm)
+	if errorMkdir != nil {
+		fmt.Println("创建ProtoPath目录失败 Err:", errorMkdir)
+		return
+	}
+
 	timeGenProto := time.Now()
 	//转表生成proto
 	if errExcelToProto := excel_to_proto.GenerateExcelToProto(confPath, ProtoPath+"proto_id.yaml", ProtoPath); errExcelToProto != nil {

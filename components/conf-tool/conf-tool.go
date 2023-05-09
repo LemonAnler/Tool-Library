@@ -191,6 +191,7 @@ func WriteFile(filename string, data []byte) error {
 }
 
 func RunCommand(name string, arg ...string) error {
+
 	cmd := exec.Command(name, arg...)
 	// 命令的错误输出和标准输出都连接到同一个管道
 	stdout, err := cmd.StdoutPipe()
@@ -208,6 +209,7 @@ func RunCommand(name string, arg ...string) error {
 		tmp := make([]byte, 1024)
 		_, err = stdout.Read(tmp)
 		fmt.Print(string(tmp))
+
 		if err != nil {
 			break
 		}

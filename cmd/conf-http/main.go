@@ -54,10 +54,11 @@ func errMsg(s string) []byte {
 	return []byte(fmt.Sprintf(`{"code":400,"message":"%s"}`, s))
 }
 
-func writeConfigJson(w http.ResponseWriter, data *ConfigJson) {
+func writeConfigJson(w http.ResponseWriter, data *ConfigJson, cmdOutPut string) {
 	jsoniter.NewEncoder(w).Encode(&response{
-		Code: 200,
-		Data: data,
+		Code:    200,
+		Data:    data,
+		Message: cmdOutPut,
 	})
 }
 
@@ -103,7 +104,7 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 		confJson.VersionPath = versionName
 		confJson.VersionMd5 = md5.String(verionData)
 
-		writeConfigJson(w, confJson)
+		writeConfigJson(w, confJson, "")
 		return
 	}
 
@@ -119,13 +120,14 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = Generate(m.bucket, confJson, data)
+
 	if err != nil {
 		fmt.Println("generate error:", err)
 		w.Write(errMsg(fmt.Sprintf("生成错误，err: %v", err)))
 		return
 	}
 
-	writeConfigJson(w, confJson)
+	writeConfigJson(w, confJson, "")
 	return
 }
 
@@ -179,7 +181,7 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 	errorRun := conf_tool.RunCommand("./bin/exceltodb.exe", "--dbPath="+dbPath, "--conf="+tempDir)
 
 	if errorRun != nil {
-		return errors.Errorf("EXE 执行失败:%v", errorRun)
+		return errors.Errorf("EXE 执行失败:%v")
 	}
 
 	_, errVersionStat := os.Stat(dbPath + "version.txt")
@@ -265,7 +267,7 @@ func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
 	jsoniter.NewEncoder(w).Encode(&response{
 		Code:    200,
 		Data:    confcsJson,
-		Message: fmt.Sprintf(":%v", err),
+		Message: fmt.Sprintf("Err:%v", err),
 	})
 
 	fmt.Println("------生成前端CS:clientCsHandleFunc结束------")
