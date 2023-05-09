@@ -22,6 +22,9 @@ func main() {
 	genDBPath := genPath + "db/"
 	flag.StringVar(&genDBPath, "dbPath", genDBPath, "DB 路径")
 
+	joinPath := "1/"
+	flag.StringVar(&joinPath, "joinPath", genDBPath, "参与路径")
+
 	flag.Parse()
 
 	fmt.Println("数据库生成路径：", genDBPath)
@@ -53,7 +56,7 @@ func main() {
 
 	timeDB := time.Now()
 	//生成数据库
-	errDB := SqliteDBGen.GenerateSqliteDB(confPath, ProtoPath, genDBPath, &allDbVersion)
+	errDB := SqliteDBGen.GenerateSqliteDB(confPath, ProtoPath, genDBPath, joinPath, &allDbVersion)
 	costTimeDB := time.Since(timeDB)
 
 	if errDB != nil {

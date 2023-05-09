@@ -201,6 +201,8 @@ func RunCommand(name string, arg ...string) error {
 		return err
 	}
 
+	cmdOutOut := ""
+
 	if err = cmd.Start(); err != nil {
 		return err
 	}
@@ -209,6 +211,7 @@ func RunCommand(name string, arg ...string) error {
 		tmp := make([]byte, 1024)
 		_, err = stdout.Read(tmp)
 		fmt.Print(string(tmp))
+		cmdOutOut += string(tmp)
 
 		if err != nil {
 			break
@@ -218,5 +221,8 @@ func RunCommand(name string, arg ...string) error {
 	if err = cmd.Wait(); err != nil {
 		return err
 	}
+
+	fmt.Println("执行命令成功:")
+
 	return nil
 }

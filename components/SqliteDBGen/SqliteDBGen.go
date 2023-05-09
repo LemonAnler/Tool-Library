@@ -31,7 +31,7 @@ var isMarshal = true
 
 var DBVersionName = "DBVersion.json"
 
-func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
+func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, joinPath string, allDbVersion *[]VersionTxtGen.MsgToDB) error {
 	errorMkdir := filemode.MkdirAll(dbGenPathStr, 777)
 	if errorMkdir != nil {
 		return errors.Errorf("创建genDBPath目录 Err:%v", dbGenPathStr)
@@ -125,7 +125,7 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, al
 
 					DBVersionData[excelMd5] = map[string]VersionTxtGen.MsgToDB{}
 
-					errGen := GenerateTableDB(path, data, ProtoPath, dbGenPathStr, allDbVersion, DBVersionData[excelMd5])
+					errGen := GenerateTableDB(path, data, ProtoPath, dbGenPathStr, joinPath, allDbVersion, DBVersionData[excelMd5])
 
 					if errGen != nil {
 						loadErrorRef.Store(errors.Errorf("生成数据库失败:%v", errGen))
@@ -157,7 +157,7 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, al
 	return nil
 }
 
-func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr string, allDbVersion *[]VersionTxtGen.MsgToDB, versionDBMap map[string]VersionTxtGen.MsgToDB) error {
+func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr string, joinPath string, allDbVersion *[]VersionTxtGen.MsgToDB, versionDBMap map[string]VersionTxtGen.MsgToDB) error {
 
 	file, errOpenBinary := xlsx.OpenBinary(data)
 	if errOpenBinary != nil {
@@ -479,7 +479,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 		//获取所有消息名字
 		newDBInfo := VersionTxtGen.MsgToDB{
 			MsgName:   GetMessageName(filenameOnly, sheetName),
-			FileName:  dbName,
+			FileName:  joinPath + dbName,
 			TableName: filenameOnly,
 			SheetName: sheetName,
 		}

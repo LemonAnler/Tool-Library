@@ -21,7 +21,7 @@ import (
 
 // 在远程服务器上运行一个命令行，将表格转换出来
 
-const packVersion = 1 // 打包版本号，如果发生变化，需要重新打包
+const packVersion = 3 // 打包版本号，如果发生变化，需要重新打包
 
 var port = flag.Int("port", 7787, "listen port")
 
@@ -180,7 +180,7 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 		}
 	}
 
-	errorRun := conf_tool.RunCommand("./bin/exceltodb.exe", "--dbPath="+dbPath, "--conf="+tempDir)
+	errorRun := conf_tool.RunCommand("./bin/exceltodb.exe", "--dbPath="+dbPath, "--conf="+tempDir, "--joinPath="+strconv.Itoa(packVersion)+"/")
 
 	if errorRun != nil {
 		return errors.Errorf("EXE 执行失败:%v")
