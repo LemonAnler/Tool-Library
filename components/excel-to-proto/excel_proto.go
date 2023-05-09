@@ -65,12 +65,6 @@ func GenerateExcelToProto(confPath string, idGenPath string, ProtoPath string) e
 		}
 	}
 
-	errChmod := os.Chmod(protoVersionPath, os.ModePerm)
-
-	if errChmod != nil {
-		return errors.Errorf("修改权限失败，Err: %v", errChmod)
-	}
-
 	protoVersionData := map[string]ProtoVersion{}
 
 	json.Unmarshal(protoVersionJson, &protoVersionData)
@@ -99,14 +93,9 @@ func GenerateExcelToProto(confPath string, idGenPath string, ProtoPath string) e
 		return errors.Errorf("序列化protoVersionData报错 json.Marshal: %v", errJson)
 	}
 
-	fileProtoVersion, errNewProtoVersion := os.OpenFile(protoVersionPath, os.O_CREATE|os.O_TRUNC, 0777)
-	defer fileProtoVersion.Close()
-
-	if errNewProtoVersion != nil {
-		return errors.Errorf("写入版本文件失败path:%v  os.OpenFile: %v", protoVersionPath, errNewProtoVersion)
+	if errWrite := conf_tool.WriteFile(protoVersionPath, jsonBytes); errWrite != nil {
+		return errors.Errorf("DBVersion 写入JSON失败, %v", errWrite)
 	}
-
-	fileProtoVersion.Write(jsonBytes)
 
 	return nil
 }
