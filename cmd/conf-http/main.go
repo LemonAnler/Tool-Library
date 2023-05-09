@@ -25,6 +25,8 @@ const packVersion = 1 // 打包版本号，如果发生变化，需要重新打�
 
 var port = flag.Int("port", 7787, "listen port")
 
+var dbBasePath = "./gen/conf-http/"
+
 var dbPath = "./gen/conf-http/" + strconv.Itoa(packVersion) + "/"
 
 func main() {
@@ -34,7 +36,7 @@ func main() {
 
 	http.HandleFunc("/server/", m.handleFunc)
 
-	http.Handle("/client/sqlite/", http.StripPrefix("/client/sqlite/", http.FileServer(http.Dir(dbPath))))
+	http.Handle("/client/sqlite/", http.StripPrefix("/client/sqlite/", http.FileServer(http.Dir(dbBasePath))))
 
 	http.HandleFunc("/client/cs/", clientCsHandleFunc)
 
@@ -101,7 +103,7 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 
 	if !os.IsNotExist(err) {
 		fmt.Println("存在对应版本:", dbPath+versionName)
-		confJson.VersionPath = versionName
+		confJson.VersionPath = strconv.Itoa(packVersion) + "/" + versionName
 		confJson.VersionMd5 = md5.String(verionData)
 
 		writeConfigJson(w, confJson, "")
@@ -195,7 +197,7 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 
 	os.Rename(dbPath+"version.txt", dbPath+getVersionName(dataMd5, dataSize))
 
-	configJson.VersionPath = getVersionName(dataMd5, dataSize)
+	configJson.VersionPath = strconv.Itoa(packVersion) + "/" + getVersionName(dataMd5, dataSize)
 
 	fmt.Println("生成成功:", configJson.VersionPath)
 

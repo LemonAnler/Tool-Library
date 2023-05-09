@@ -256,6 +256,10 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 		defaultRow := curSheet.Rows[4]
 		typeRow := curSheet.Rows[2]
 
+		if len(typeRow.Cells) != len(titleRow.Cells) {
+			return errors.Errorf("表格数据类型和标题数量不一致 表名：%s", path)
+		}
+
 		for j := starReadLine; j < len(curSheet.Rows); j++ {
 			msg := dynamic.NewMessage(msgDesc)
 
@@ -265,11 +269,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 
 			isExistKey := false
 
-			for k := 0; k < len(curRow.Cells); k++ {
-
-				if k >= len(titleRow.Cells) {
-					continue
-				}
+			for k := 0; k < len(titleRow.Cells); k++ {
 
 				title := titleRow.Cells[k].String()
 				strType := typeRow.Cells[k].String()
@@ -282,14 +282,16 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 					isExistKey = true
 				}
 
-				curCell := curRow.Cells[k]
+				cellStr := ""
+
+				if k < len(curRow.Cells) {
+					cellStr = curRow.Cells[k].String()
+				}
 
 				for _, fieldDesc := range msgDesc.GetFields() {
 					fieldName := fieldDesc.GetName()
 
 					if strings.ToLower(fieldName) == strings.ToLower(title) {
-
-						cellStr := curCell.String()
 
 						if strings.TrimSpace(cellStr) == "" {
 							//为空之后直接去拿默认值,区别Constant 判定是存在key值得表
@@ -323,7 +325,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 										valueInt, err := strconv.Atoi(value)
 
 										if err != nil {
-											return errors.Errorf("表名：%v_%v title:%v type: %v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, title, strType, j+1, k+1, curCell.String(), err)
+											return errors.Errorf("表名：%v_%v title:%v type: %v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, title, strType, j+1, k+1, cellStr, err)
 										}
 
 										msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(valueInt))
@@ -332,7 +334,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 									value, err := strconv.Atoi(cellStr)
 
 									if err != nil {
-										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, cellStr, err)
 									}
 
 									msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(value))
@@ -342,7 +344,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 								value, err := strconv.Atoi(cellStr)
 
 								if err != nil {
-									return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+									return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, cellStr, err)
 								}
 
 								msg.SetFieldByName(fieldDesc.GetName(), int32(value))
@@ -378,7 +380,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 							value, err := strconv.ParseBool(cellStr)
 
 							if err != nil {
-								return errors.Errorf("行数:%d,列数：%d 对应BOOL数据转换失败：%v ERR:%v", j, k, curCell.String(), err)
+								return errors.Errorf("行数:%d,列数：%d 对应BOOL数据转换失败：%v ERR:%v", j, k, cellStr, err)
 							}
 
 							if fieldDesc.IsRepeated() {
@@ -403,7 +405,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 										valueFloat, err := strconv.ParseFloat(value, 32)
 
 										if err != nil {
-											return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应FLOAT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+											return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应FLOAT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, cellStr, err)
 										}
 
 										msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(valueFloat))
@@ -412,7 +414,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 									value, err := strconv.ParseFloat(cellStr, 32)
 
 									if err != nil {
-										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应FLOAT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, curCell.String(), err)
+										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应FLOAT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, cellStr, err)
 									}
 
 									msg.AddRepeatedFieldByName(fieldDesc.GetName(), float32(value))
