@@ -60,7 +60,7 @@ func main() {
 	costTimeDB := time.Since(timeDB)
 
 	if errDB != nil {
-		fmt.Println("生成数据库失败：Err", errDB)
+		os.Stderr.WriteString("生成数据库失败,Err：" + errDB.Error() + "\n")
 		return
 	}
 

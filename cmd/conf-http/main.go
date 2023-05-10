@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"gocloud.dev/blob"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -52,8 +53,13 @@ type response struct {
 	Data interface{} `json:"data"`
 }
 
-func errMsg(s string) []byte {
-	return []byte(fmt.Sprintf(`{"code":400,"message":"%s"}`, s))
+func writeErrMsg(w http.ResponseWriter, s string) {
+	jsoniter.NewEncoder(w).Encode(&response{
+		Code:    400,
+		Message: s,
+	})
+
+	//return []byte(fmt.Sprintf(`{"code":400,"message":"%s"}`, s))
 }
 
 func writeConfigJson(w http.ResponseWriter, data *ConfigJson, cmdOutPut string) {
@@ -63,9 +69,6 @@ func writeConfigJson(w http.ResponseWriter, data *ConfigJson, cmdOutPut string) 
 		Message: cmdOutPut,
 	})
 }
-
-var errEmptyMd5OrSize = errMsg("md5 or size is empty")
-var errInvalidSize = errMsg("invalid size")
 
 type manager struct {
 	bucket *blob.Bucket
@@ -78,7 +81,7 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 
 	if fileMd5 == "" || fileSize == "" {
 		fmt.Println("md5 or size is empty")
-		w.Write(errEmptyMd5OrSize)
+		writeErrMsg(w, "md5 or size is empty")
 		return
 	}
 
@@ -86,7 +89,7 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 	val, err := strconv.ParseInt(fileSize, 10, 64)
 	if err != nil || val <= 0 {
 		fmt.Println("invalid file size", fileSize, "  val :", val)
-		w.Write(errInvalidSize)
+		writeErrMsg(w, "invalid size")
 		return
 	}
 	fileSizeInt64 = val
@@ -106,7 +109,7 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 		confJson.VersionPath = strconv.Itoa(packVersion) + "/" + versionName
 		confJson.VersionMd5 = md5.String(verionData)
 
-		writeConfigJson(w, confJson, "")
+		writeConfigJson(w, confJson, "使用已存在对应版本:"+dbPath+versionName)
 		return
 	}
 
@@ -117,15 +120,15 @@ func (m *manager) handleFunc(w http.ResponseWriter, r *http.Request) {
 	dataSize := int64(len(data))
 
 	if fileMd5 != dataMd5 || fileSizeInt64 != dataSize {
-		w.Write(errMsg(fmt.Sprintf("header和body的数据不一致, headerMd5: %v, bodyMd5: %v, headerSize: %v, bodySize: %v", fileMd5, dataMd5, fileSizeInt64, dataSize)))
+		writeErrMsg(w, fmt.Sprintf("header和body的数据不一致, headerMd5: %v, bodyMd5: %v, headerSize: %v, bodySize: %v", fileMd5, dataMd5, fileSizeInt64, dataSize))
 		return
 	}
 
 	err = Generate(m.bucket, confJson, data)
 
 	if err != nil {
-		fmt.Println("generate error:", err)
-		w.Write(errMsg(fmt.Sprintf("生成错误，err: %v", err)))
+		fmt.Println("重新生成版本文件报错,generate:", err)
+		writeErrMsg(w, fmt.Sprintf("生成错误，err: %v", err))
 		return
 	}
 
@@ -139,7 +142,7 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 	genMux.Lock()
 	defer genMux.Unlock()
 
-	tempDir, err := os.MkdirTemp("", "excel-")
+	tempDir, err := ioutil.TempDir("", "excel-")
 
 	if err != nil {
 		return errors.Errorf("os.MkdirTemp fail, err: %v", err)
@@ -183,7 +186,7 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 	errorRun := conf_tool.RunCommand("./bin/exceltodb.exe", "--dbPath="+dbPath, "--conf="+tempDir, "--joinPath="+strconv.Itoa(packVersion)+"/")
 
 	if errorRun != nil {
-		return errors.Errorf("EXE 执行失败:%v")
+		return errors.Errorf("EXE 执行失败:%v", errorRun)
 	}
 
 	_, errVersionStat := os.Stat(dbPath + "version.txt")
@@ -236,7 +239,7 @@ func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
 
 	if fileMd5 == "" || fileSize == "" {
 		fmt.Println("md5 or size is empty")
-		w.Write(errEmptyMd5OrSize)
+		writeErrMsg(w, "md5 or size is empty")
 		return
 	}
 
@@ -244,7 +247,7 @@ func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
 	val, err := strconv.ParseInt(fileSize, 10, 64)
 	if err != nil || val <= 0 {
 		fmt.Println("invalid file size", fileSize, "  val :", val)
-		w.Write(errInvalidSize)
+		writeErrMsg(w, "invalid size")
 		return
 	}
 	fileSizeInt64 = val
@@ -255,7 +258,7 @@ func clientCsHandleFunc(w http.ResponseWriter, r *http.Request) {
 	dataSize := int64(len(data))
 
 	if fileMd5 != dataMd5 || fileSizeInt64 != dataSize {
-		w.Write(errMsg(fmt.Sprintf("header和body的数据不一致, headerMd5: %v, bodyMd5: %v, headerSize: %v, bodySize: %v", fileMd5, dataMd5, fileSizeInt64, dataSize)))
+		writeErrMsg(w, fmt.Sprintf("header和body的数据不一致, headerMd5: %v, bodyMd5: %v, headerSize: %v, bodySize: %v", fileMd5, dataMd5, fileSizeInt64, dataSize))
 		return
 	}
 
