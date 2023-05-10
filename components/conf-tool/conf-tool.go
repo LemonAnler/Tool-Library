@@ -222,7 +222,5 @@ func RunCommand(name string, arg ...string) error {
 		return err
 	}
 
-	fmt.Println("执行命令成功:")
-
 	return nil
 }

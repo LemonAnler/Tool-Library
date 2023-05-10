@@ -161,10 +161,13 @@ func ReadDirToGenerateProto(protoIdGen *ProtoIDGen.ProtoIdGen, confPath string, 
 						debug.PrintStack()
 					}
 				}()
+
 				loadMux.Lock()
 				defer loadMux.Unlock()
 
+				//timeOneGen := time.Now()
 				errGen := genProtoByTable(path, ProtoPath, csPath, protoIdGen, protoVersionData)
+				//fmt.Println("线程生成path:"+path+" Proto耗时：", time.Since(timeOneGen))
 
 				if errGen != nil {
 					loadErrorRef.Store(errors.Errorf("genProtoByTable 表格：%v 生成Proto失败 Error：%v", path, errGen))
@@ -212,18 +215,35 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 
 			if csPath != "" {
 
-				for _, protoName := range v.ProtoName {
-					errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+protoName)
+				wg := &sync.WaitGroup{}
+				var loadErrorRef atomic.Value
 
-					if errRun != nil {
-						return errors.Errorf("本次版本生成cs文件失败 %v", errRun)
-					}
+				for _, protoName := range v.ProtoName {
+
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+protoName)
+
+						if errRun != nil {
+							loadErrorRef.Store(errors.Errorf("protoc 生成cs失败 Error：%v", errRun))
+							return
+						}
+					}()
+				}
+
+				wg.Wait()
+
+				if loadError := loadErrorRef.Load(); loadError != nil {
+					return errors.Errorf("多线程生成Proto,error, %v", loadError)
 				}
 			}
 		}
 	}
 
 	if !needGen {
+		//fmt.Println("表格数据没有变化，不需要生成Proto：", path)
+
 		return nil
 	}
 
