@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package conf;
+
+option go_package="./gen/proto/;conf";
+message  confpbHeroMainData   {
+
+    int32   colorQuality = 24;
+
+    float   drawingScale = 2;
+
+    float   Width = 35;
+
+    int32   heroType = 6;
+
+    string   englishName = 22;
+
+    string   nickname = 11;
+
+    int32   Occupation = 8;
+
+    int32   sex = 36;
+
+    int32   SkillType_4 = 15;
+
+    int32   coreid = 9;
+
+    int32   skillunlock_2 = 5;
+
+    int32   camp = 7;
+
+    repeated int32   drawingOffset = 43;
+
+    int32   isBigBanner = 39;
+
+    int32   Skill1MaxLevel = 45;
+
+    int32   Skill_2 = 31;
+
+    int32   skillunlock_4 = 46;
+
+    int32   levelupcost = 34;
+
+    int32   attribution = 41;
+
+    int32   id = 29;
+
+    int32   idgroup = 10;
+
+    int32   Skill3MaxLevel = 14;
+
+    int32   skillunlock_1 = 33;
+
+    repeated int32   lifeCase_Consumptionist = 28;
+
+    string   name = 42;
+
+    string   picID = 37;
+
+    string   prefabName = 13;
+
+    int32   fashionId = 38;
+
+    int32   Skill_1 = 17;
+
+    int32   intro = 23;
+
+    int32   Skill2MaxLevel = 32;
+
+    int32   SkillType_3 = 3;
+
+    repeated string   voice = 12;
+
+    int32   Skill_4 = 27;
+
+    int32   bornbreakuptime = 20;
+
+    int32   SkillType_2 = 26;
+
+    int32   Skill_3 = 40;
+
+    int32   Skill4MaxLevel = 4;
+
+    int32   breakupcost = 19;
+
+    int32   bornLv  = 16;
+
+    int32   HeroicFragmentCost = 21;
+
+    string   animID = 25;
+
+    string   Icon = 1;
+
+    int32   BannerName = 44;
+
+    int32   SkillType_1 = 30;
+
+    int32   skillunlock_3 = 18;
+
+}

@@ -15,6 +15,7 @@ import (
 	"github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 	"github.com/tealeg/xlsx"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -646,4 +647,70 @@ func GetDBTableName(filenameOnly string, sheetName string, param1 string, param2
 
 func GetMessageName(filenameOnly string, sheetName string) string {
 	return "confpb" + filenameOnly + sheetName
+}
+
+func GetDBStr(db string, proto string) error {
+	Parser := protoparse.Parser{}
+	//加载并解析 proto文件,得到一组 FileDescriptor
+	desCs, err := Parser.ParseFiles("./cmd/GetDbStr/" + proto + ".proto")
+	if err != nil {
+		return errors.Errorf("GenerateSqliteDB error 生成失败解析proto：%v, %v", proto, err)
+	}
+
+	fileDescriptor := desCs[0]
+
+	var msgDesc *desc.MessageDescriptor
+
+	for _, v := range fileDescriptor.GetMessageTypes() {
+		if proto == v.GetName() {
+			msgDesc = v
+		}
+	}
+
+	if msgDesc == nil {
+		fmt.Println("msgDesc==nil")
+	}
+
+	fmt.Println("找到了")
+
+	msg := dynamic.NewMessage(msgDesc)
+
+	desDB, errCreateSrcDB := sql.Open("sqlite3", "./cmd/GetDbStr/"+db)
+
+	if errCreateSrcDB != nil {
+		return errors.Errorf("数据库开启失败 err %v", errCreateSrcDB)
+	}
+
+	defer desDB.Close()
+
+	rows, err := desDB.Query("SELECT * FROM data")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+
+		var id int
+		var data []byte
+
+		err = rows.Scan(&id, &data)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = msg.Unmarshal(data)
+
+		if err != nil {
+			fmt.Println("msg.Unmarshal(data) error", err)
+			return err
+		}
+
+		fmt.Printf("%d %s %s \n", id, msg.String(), md5.String(data))
+	}
+
+	return nil
 }

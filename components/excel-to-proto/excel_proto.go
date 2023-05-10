@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -387,6 +388,12 @@ func GenItselfProtoStr(protoPath string, messageName string, builder *strings.Bu
 	return nil
 }
 
+type ProtoSort struct {
+	ProtoId    int
+	memberName string
+	memberType string
+}
+
 func GenProtoTomessage(path string, sheetName string, memberMap map[string]string, builder *strings.Builder, protoIdGen *ProtoIDGen.ProtoIdGen) error {
 	//获取文件名带后缀
 	filenameWithSuffix := filepath.Base(path)
@@ -397,13 +404,10 @@ func GenProtoTomessage(path string, sheetName string, memberMap map[string]strin
 
 	messageName := ProtoIDGen.GetMessageName(filenameOnly, sheetName)
 
-	_, errProtoStr := builder.WriteString("\nmessage  " + messageName + "   {\n\n")
-
-	if errProtoStr != nil {
-		return errors.Errorf("builder.WriteString Proto Head Err:%v", errProtoStr)
-	}
+	vecSort := make([]ProtoSort, 0, len(memberMap))
 
 	for k, v := range memberMap {
+
 		strColType := v
 		if strings.HasPrefix(strColType, "repeated") {
 			strColType = strings.Trim(strings.TrimSpace(strColType), "repeated") + "_array"
@@ -411,7 +415,26 @@ func GenProtoTomessage(path string, sheetName string, memberMap map[string]strin
 
 		fieldName := sheetName + ProtoIDGen.KeySep + k + ProtoIDGen.KeySep + strColType
 
-		writeStr := "    " + v + "   " + k + " = " + strconv.Itoa(protoIdGen.GetTypeFieldId(filenameOnly, fieldName)) + ";\n\n"
+		vecSort = append(vecSort, ProtoSort{
+			ProtoId:    protoIdGen.GetTypeFieldId(filenameOnly, fieldName),
+			memberName: k,
+			memberType: v,
+		})
+	}
+
+	sort.Slice(vecSort, func(i, j int) bool {
+		return vecSort[i].ProtoId < vecSort[j].ProtoId
+	})
+
+	_, errProtoStr := builder.WriteString("\nmessage  " + messageName + "   {\n\n")
+
+	if errProtoStr != nil {
+		return errors.Errorf("builder.WriteString Proto Head Err:%v", errProtoStr)
+	}
+
+	for _, v := range vecSort {
+
+		writeStr := "    " + v.memberType + "   " + v.memberName + " = " + strconv.Itoa(v.ProtoId) + ";\n\n"
 
 		_, errProtoStr = builder.WriteString(writeStr)
 
