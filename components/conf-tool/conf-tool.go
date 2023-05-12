@@ -4,7 +4,6 @@ import (
 	"Tool-Library/components/filemode"
 	"Tool-Library/shared/config"
 	"archive/zip"
-	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
@@ -16,7 +15,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 )
 
 func TransPath(path string) string {
@@ -195,62 +193,30 @@ func WriteFile(filename string, data []byte) error {
 func RunCommand(name string, arg ...string) error {
 
 	cmd := exec.Command(name, arg...)
-
-	cmd.Stdin = os.Stdin
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-	//捕获标准输出
+	// 命令的错误输出和标准输出都连接到同一个管道
 	stdout, err := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
+
 	if err != nil {
-		return errors.Errorf("捕获标准输出 ERROR:%v", err)
+		return err
 	}
-	readout := bufio.NewReader(stdout)
-	go func() {
-		defer wg.Done()
-		GetOutput(readout)
-	}()
 
-	//捕获标准错误
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		fmt.Println("ERROR:", err)
-		os.Exit(1)
+	if err = cmd.Start(); err != nil {
+		return err
 	}
-	readErr := bufio.NewReader(stderr)
+	// 从管道中实时获取输出并打印到终端
+	for {
+		tmp := make([]byte, 1024)
+		_, err := stdout.Read(tmp)
+		fmt.Print(string(tmp))
+		if err != nil {
+			break
+		}
+	}
 
-	errCmdOut := ""
-	go func() {
-		defer wg.Done()
-		errCmdOut = GetOutput(readErr)
-	}()
-
-	//执行命令
-	cmd.Run()
-	wg.Wait()
-
-	if errCmdOut != "" {
-		return errors.Errorf("执行命令失败，err: %s \n", errCmdOut)
+	if err = cmd.Wait(); err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func GetOutput(reader *bufio.Reader) string {
-	var sumOutput string //统计屏幕的全部输出内容
-	outputBytes := make([]byte, 200)
-	for {
-		n, err := reader.Read(outputBytes) //获取屏幕的实时输出(并不是按照回车分割，所以要结合sumOutput)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			fmt.Println(err)
-			sumOutput += err.Error()
-		}
-		output := string(outputBytes[:n])
-		fmt.Print(output) //输出屏幕内容
-		sumOutput += output
-	}
-	return sumOutput
 }

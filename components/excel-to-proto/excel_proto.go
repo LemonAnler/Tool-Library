@@ -218,7 +218,9 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 				wg := &sync.WaitGroup{}
 				var loadErrorRef atomic.Value
 
-				for protoName, _ := range v.ProtoName {
+				for pStr, _ := range v.ProtoName {
+
+					protoName := pStr
 
 					wg.Add(1)
 					go func() {
@@ -265,6 +267,8 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 	if ListSheet == nil {
 		return errors.Errorf("表格数据中没有找到list页签 表名：%s ", path)
 	}
+
+	protoNameMap := map[string]struct{}{}
 
 	for i := 0; i < len(ListSheet.Rows); i++ {
 		sheetRow := ListSheet.Rows[i]
@@ -371,18 +375,12 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 			}
 		}
 
-		protoNameList := map[string]struct{}{}
+		protoNameMap[messageName+".proto"] = struct{}{}
+	}
 
-		for protoName, _ := range protoVersionData[filenameOnly].ProtoName {
-			protoNameList[protoName] = struct{}{}
-		}
-
-		protoNameList[messageName+".proto"] = struct{}{}
-
-		protoVersionData[filenameOnly] = ProtoVersion{
-			ExcelMd5:  md5.String(data),
-			ProtoName: protoNameList,
-		}
+	protoVersionData[filenameOnly] = ProtoVersion{
+		ExcelMd5:  md5.String(data),
+		ProtoName: protoNameMap,
 	}
 
 	return nil

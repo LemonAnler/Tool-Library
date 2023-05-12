@@ -5,10 +5,53 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4d606aee-feb0-46f0-9d8d-da35ceccdf2a" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/cmd/conf-http/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/conf-http/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/cs-gen/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/cs-gen/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conf/Army.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/conf/Army.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conf/BackGround.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/conf/BackGround.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/conf-tool/conf-tool.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/conf-tool/conf-tool.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Activity.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/ActorPosition.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/ArenaRobot.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Army.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Attribution.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/BackGround.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/CeShi.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/ChipCard.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/ChipcardSuit.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/ClientDescription.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Constan.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Cost.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/EquipCard.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/EquipLevelUpExp.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/EquipRandomAttrPool.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/FightingEffect.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/FightingEffectSuperpose.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/FightingSkill.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/FightingSkillAction.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Gacha.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/GiftPack.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/HeroIPDetal.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/HeroMain.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/HeroProperty.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Mail.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Material.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Monster.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/MonsterArmy.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Prize.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/RandomName.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/ResourceCollection.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/ResourceLevel.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Rogue.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/RogueMission.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/RoleCounter.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/SearchTarget.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Shop.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Skill.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/SysFun.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Task.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/Tower.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/TransFormMap.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/WindowMusic.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/conf/user.xlsx" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,11 +113,11 @@
       <recent name="D:\gopath\src\github.com\Tool-Library\bin" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\gopath\src\Tool-Library\cmd\GetDbStr" />
+      <recent name="D:\gopath\src\Tool-Library" />
       <recent name="D:\gopath\src\Tool-Library\cmd" />
       <recent name="G:\gopath\src\github.com\conf-http" />
       <recent name="D:\gopath\src\github.com\Tool-Library\components" />
-      <recent name="D:\gopath\src\github.com\Tool-Library" />
-      <recent name="D:\gopath\src\github.com\Tool-Library\Cmd\excel-to-db" />
     </key>
   </component>
   <component name="RunManager" selected="Go 构建.go build Tool-Library/cmd/cs-gen">
@@ -88,13 +131,22 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="go build Tool-Library/cmd/build" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+    <configuration name="go build Tool-Library/cmd" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Tool-Library" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="Tool-Library/cmd/build" />
+      <package value="Tool-Library/cmd" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/cmd/build/build.go" />
+      <filePath value="$PROJECT_DIR$/cmd/main.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build Tool-Library/cmd/GetDbStr" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="Tool-Library" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="Tool-Library/cmd/GetDbStr" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/cmd/GetDbStr/main.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build Tool-Library/cmd/conf-http" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
@@ -124,15 +176,6 @@
       <filePath value="$PROJECT_DIR$/cmd/excel-to-db/main.go" />
       <method v="2" />
     </configuration>
-    <configuration name="go build Tool-Library/cmd/get-cs" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="Tool-Library" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="Tool-Library/cmd/get-cs" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/cmd/get-cs/main.go" />
-      <method v="2" />
-    </configuration>
     <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Tool-Library" />
       <working_directory value="$PROJECT_DIR$" />
@@ -146,11 +189,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go 构建.go build Tool-Library/cmd/conf-http" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/cs-gen" />
+        <item itemvalue="Go 构建.go build Tool-Library/cmd/conf-http" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/excel-to-db" />
-        <item itemvalue="Go 构建.go build Tool-Library/cmd/get-cs" />
-        <item itemvalue="Go 构建.go build Tool-Library/cmd/build" />
+        <item itemvalue="Go 构建.go build Tool-Library/cmd/GetDbStr" />
+        <item itemvalue="Go 构建.go build Tool-Library/cmd" />
       </list>
     </recent_temporary>
   </component>
@@ -177,19 +220,19 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/cmd/cs-gen/main.go</url>
-          <line>14</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cmd/build/build.go</url>
           <line>11</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/cmd/excel-to-db/main.go</url>
-          <line>17</line>
-          <option name="timeStamp" value="4" />
+          <url>file://$PROJECT_DIR$/cmd/conf-http/main.go</url>
+          <line>32</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/cmd/cs-gen/main.go</url>
+          <line>14</line>
+          <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
