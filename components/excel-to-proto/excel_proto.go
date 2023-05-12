@@ -26,7 +26,7 @@ var ProtoVersionName = "ProtoVersion.json"
 
 type ProtoVersion struct {
 	ExcelMd5  string
-	ProtoName []string
+	ProtoName map[string]struct{}
 }
 
 func GenerateExcelToProto(confPath string, idGenPath string, ProtoPath string) error {
@@ -209,7 +209,7 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 	if _, isOk := protoVersionData[filenameOnly]; isOk {
 		v := protoVersionData[filenameOnly]
 
-		if v.ExcelMd5 == md5.String(data) {
+		if v.ExcelMd5 == md5.String(data) && len(v.ProtoName) != 0 {
 			needGen = false
 			//虽然不需要读取数据了，但是 cs还是需要生成
 
@@ -218,11 +218,14 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 				wg := &sync.WaitGroup{}
 				var loadErrorRef atomic.Value
 
-				for _, protoName := range v.ProtoName {
+				for protoName, _ := range v.ProtoName {
 
 					wg.Add(1)
 					go func() {
 						defer wg.Done()
+
+						fmt.Println("生成协议文件：", ProtoPath+protoName)
+
 						errRun := conf_tool.RunCommand("protoc", "--csharp_out="+csPath, ProtoPath+protoName)
 
 						if errRun != nil {
@@ -238,6 +241,8 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 					return errors.Errorf("多线程生成Proto,error, %v", loadError)
 				}
 			}
+
+			return nil
 		}
 	}
 
@@ -366,9 +371,13 @@ func genProtoByTable(path string, ProtoPath string, csPath string, protoIdGen *P
 			}
 		}
 
-		protoNameList := protoVersionData[filenameOnly].ProtoName
+		protoNameList := map[string]struct{}{}
 
-		protoNameList = append(protoNameList, messageName+".proto")
+		for protoName, _ := range protoVersionData[filenameOnly].ProtoName {
+			protoNameList[protoName] = struct{}{}
+		}
+
+		protoNameList[messageName+".proto"] = struct{}{}
 
 		protoVersionData[filenameOnly] = ProtoVersion{
 			ExcelMd5:  md5.String(data),
