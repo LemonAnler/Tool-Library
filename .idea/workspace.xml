@@ -7,7 +7,6 @@
     <list default="true" id="4d606aee-feb0-46f0-9d8d-da35ceccdf2a" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/conf-tool/conf-tool.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/conf-tool/conf-tool.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" beforeDir="false" afterPath="$PROJECT_DIR$/components/excel-to-proto/excel_proto.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/conf/Activity.xlsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/conf/ActorPosition.xlsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/conf/ArenaRobot.xlsx" beforeDir="false" />
@@ -120,7 +119,7 @@
       <recent name="D:\gopath\src\github.com\Tool-Library\components" />
     </key>
   </component>
-  <component name="RunManager" selected="Go 构建.go build Tool-Library/cmd/cs-gen">
+  <component name="RunManager" selected="Go 构建.go build Tool-Library/cmd/conf-http">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="Tool-Library" />
       <working_directory value="$PROJECT_DIR$" />
@@ -189,8 +188,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go 构建.go build Tool-Library/cmd/cs-gen" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/conf-http" />
+        <item itemvalue="Go 构建.go build Tool-Library/cmd/cs-gen" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/excel-to-db" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd/GetDbStr" />
         <item itemvalue="Go 构建.go build Tool-Library/cmd" />

@@ -193,29 +193,23 @@ func WriteFile(filename string, data []byte) error {
 func RunCommand(name string, arg ...string) error {
 
 	cmd := exec.Command(name, arg...)
-	// 命令的错误输出和标准输出都连接到同一个管道
-	stdout, err := cmd.StdoutPipe()
-	cmd.Stderr = cmd.Stdout
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout // 标准输出
+	cmd.Stderr = &stderr // 标准错误
+	err := cmd.Run()
 
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "执行命令失败，name: %s, arg: %v, stdout: %s, stderr: %s", name, arg, stdout.String(), stderr.String())
 	}
 
-	if err = cmd.Start(); err != nil {
-		return err
-	}
-	// 从管道中实时获取输出并打印到终端
-	for {
-		tmp := make([]byte, 1024)
-		_, err := stdout.Read(tmp)
-		fmt.Print(string(tmp))
-		if err != nil {
-			break
-		}
+	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+
+	if len(outStr) > 0 {
+		fmt.Println(outStr)
 	}
 
-	if err = cmd.Wait(); err != nil {
-		return err
+	if len(errStr) > 0 {
+		return errors.Errorf(errStr)
 	}
 
 	return nil
