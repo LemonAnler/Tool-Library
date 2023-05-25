@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"gocloud.dev/blob"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -34,6 +33,8 @@ func main() {
 	flag.Parse()
 
 	m := manager{}
+
+	filemode.MkdirAll("./tmp/", 0777)
 
 	http.HandleFunc("/server/", m.handleFunc)
 
@@ -142,7 +143,7 @@ func Generate(bucket *blob.Bucket, configJson *ConfigJson, packBytes []byte) err
 	genMux.Lock()
 	defer genMux.Unlock()
 
-	tempDir, err := ioutil.TempDir("", "excel-")
+	tempDir, err := os.MkdirTemp("tmp/", "excel-")
 
 	if err != nil {
 		return errors.Errorf("os.MkdirTemp fail, err: %v", err)
@@ -292,13 +293,13 @@ func GenerateCs(configJson *ConfigCsJson, packBytes []byte) error {
 		return errors.Errorf("filemode.MkdirAll(./gen/) fail, err: %v", errCreate)
 	}
 
-	tempConfDir, err := os.MkdirTemp("gen/", "excel-")
+	tempConfDir, err := os.MkdirTemp("tmp/", "excel-")
 
 	if err != nil {
 		return errors.Errorf("filemode.MkdirAll(%s) fail, err: %v", tempConfDir, err)
 	}
 
-	tempCsDir, err := os.MkdirTemp("gen/", "cs-")
+	tempCsDir, err := os.MkdirTemp("tmp/", "cs-")
 
 	if err != nil {
 		return errors.Errorf("filemode.MkdirAll(%s) fail, err: %v", tempCsDir, err)

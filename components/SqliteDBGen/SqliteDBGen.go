@@ -443,7 +443,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 
 			//存在对应的ID 或者key title 字段
 			if isExistKey {
-				if keyStr == "" || keyStr == "0" {
+				if keyStr == "" {
 					continue
 				}
 			} else {
