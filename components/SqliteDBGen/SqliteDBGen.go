@@ -326,7 +326,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 										valueInt, err := strconv.Atoi(value)
 
 										if err != nil {
-											return errors.Errorf("表名：%v_%v title:%v type: %v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, title, strType, j+1, k+1, cellStr, err)
+											return errors.Errorf("表名：%v_%v title:%v type: %v 行数:%d,列数：%d 对应INT_LIST数据转换失败：%v ERR:%v", filenameOnly, sheetName, title, strType, j+1, k+1, cellStr, err)
 										}
 
 										msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(valueInt))
@@ -335,7 +335,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 									value, err := strconv.Atoi(cellStr)
 
 									if err != nil {
-										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, cellStr, err)
+										return errors.Errorf("表名：%v_%v 行数:%d,列数：%d 类型：%v 对应INT数据转换失败：%v ERR:%v", filenameOnly, sheetName, j+1, k+1, strType, cellStr, err)
 									}
 
 									msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(value))

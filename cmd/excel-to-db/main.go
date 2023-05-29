@@ -24,7 +24,6 @@ func main() {
 
 	joinPath := "1/"
 	flag.StringVar(&joinPath, "joinPath", genDBPath, "参与路径")
-
 	flag.Parse()
 
 	fmt.Println("数据库生成路径：", genDBPath)
