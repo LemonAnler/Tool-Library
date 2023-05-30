@@ -114,7 +114,7 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, jo
 
 				excelMd5 := fName + "_" + md5.String(data)
 
-				if _, ok := DBVersionData[excelMd5]; ok {
+				if _, ok := DBVersionData[excelMd5]; ok && len(DBVersionData[excelMd5]) > 0 {
 					//存在已经生成的版本跳过
 					excelMd5Proto := DBVersionData[excelMd5]
 

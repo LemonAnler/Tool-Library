@@ -21,7 +21,7 @@ import (
 
 // 在远程服务器上运行一个命令行，将表格转换出来
 
-const packVersion = 3 // 打包版本号，如果发生变化，需要重新打包
+const packVersion = 4 // 打包版本号，如果发生变化，需要重新打包
 
 var port = flag.Int("port", 7787, "listen port")
 
