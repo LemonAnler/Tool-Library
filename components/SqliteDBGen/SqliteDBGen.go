@@ -273,7 +273,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 			for k := 0; k < len(titleRow.Cells); k++ {
 
 				title := titleRow.Cells[k].String()
-				strType := typeRow.Cells[k].String()
+				strType := strings.ToLower(typeRow.Cells[k].String())
 
 				if title == "" {
 					continue
@@ -323,10 +323,10 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 											continue
 										}
 
-										valueInt, err := strconv.Atoi(value)
+										valueInt, err := strconv.ParseInt(value, 10, 32)
 
 										if err != nil {
-											return errors.Errorf("表名：%v_%v title:%v type: %v 行数:%d,列数：%d 对应INT_LIST数据转换失败：%v ERR:%v", filenameOnly, sheetName, title, strType, j+1, k+1, cellStr, err)
+											return errors.Errorf("表名：%v_%v title:%v type: %v 行数:%d,列数：%d 对应INT_LIST数据转换失败：%v 对应装换数值 %v ERR:%v", filenameOnly, sheetName, title, strType, j+1, k+1, cellStr, value, err)
 										}
 
 										msg.AddRepeatedFieldByName(fieldDesc.GetName(), int32(valueInt))
