@@ -124,9 +124,19 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, jo
 				} else {
 					fmt.Println("生成对应表的DB,表名:", fName)
 
+					isErr:=false
+					if _, isExist := DBVersionData[excelMd5]; isExist {
+						fmt.Println("错误数据:", excelMd5)
+						isErr=true
+					}
+
 					DBVersionData[excelMd5] = map[string]VersionTxtGen.MsgToDB{}
 
 					errGen := GenerateTableDB(path, data, ProtoPath, dbGenPathStr, joinPath, allDbVersion, DBVersionData[excelMd5])
+
+					if isErr{
+						fmt.Println("错误数据重新写入大小:", len(DBVersionData[excelMd5]), "数据:", DBVersionData[excelMd5])
+					}
 
 					if errGen != nil {
 						loadErrorRef.Store(errors.Errorf("生成数据库失败:%v", errGen))
@@ -200,7 +210,7 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 		if !os.IsNotExist(errIsExist) {
 			*allDbVersion = append(*allDbVersion, VersionTxtGen.MsgToDB{
 				MsgName:   ProtoIDGen.GetMessageName(filenameOnly, sheetName),
-				FileName:  dbName,
+				FileName:  joinPath+dbName,
 				TableName: filenameOnly,
 				SheetName: sheetName,
 			})
