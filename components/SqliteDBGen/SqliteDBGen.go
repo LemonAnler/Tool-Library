@@ -80,6 +80,8 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, jo
 
 		loadMux := &sync.Mutex{}
 
+		fmt.Println("生成数据库对应表数量：",len(fss))
+
 		for _, f := range fss {
 			fName := f.Name()
 
@@ -117,6 +119,8 @@ func GenerateSqliteDB(confPath string, ProtoPath string, dbGenPathStr string, jo
 				if _, ok := DBVersionData[excelMd5]; ok && len(DBVersionData[excelMd5]) > 0 {
 					//存在已经生成的版本跳过
 					excelMd5Proto := DBVersionData[excelMd5]
+
+					fmt.Println("已经生成过对应表的DB,表名:", fName, "写入数量:", len(excelMd5Proto))
 
 					for _, db := range excelMd5Proto {
 						*allDbVersion = append(*allDbVersion, db)
@@ -208,14 +212,19 @@ func GenerateTableDB(path string, data []byte, ProtoPath string, dbGenPathStr st
 		_, errIsExist := os.Stat(dbGenPathStr + dbName)
 
 		if !os.IsNotExist(errIsExist) {
-			*allDbVersion = append(*allDbVersion, VersionTxtGen.MsgToDB{
+
+			newDBInfo := VersionTxtGen.MsgToDB{
 				MsgName:   ProtoIDGen.GetMessageName(filenameOnly, sheetName),
 				FileName:  joinPath+dbName,
 				TableName: filenameOnly,
 				SheetName: sheetName,
-			})
+			}
 
-			return nil
+			*allDbVersion = append(*allDbVersion, newDBInfo)
+
+			versionDBMap[dbName] = newDBInfo
+
+			continue
 		}
 
 		messageName := ProtoIDGen.GetMessageName(filenameOnly, sheetName)
